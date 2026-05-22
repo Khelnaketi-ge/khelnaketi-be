@@ -66,9 +66,24 @@ public sealed class GoogleAuthService(
                 throw new UnauthorizedException(UnauthorizedErrors.InvalidExternalLogin);
             }
 
-            var user = await context.Users.SingleOrDefaultAsync(
-                x => x.NormalizedEmail == normalizedProviderEmail,
-                cancellationToken);
+            var matchingUsers = await context.Users
+                .Where(x =>
+                    x.NormalizedEmail == normalizedProviderEmail
+                    || x.Email.Trim().ToUpper() == normalizedProviderEmail)
+                .OrderByDescending(x => x.EmailVerified)
+                .Take(2)
+                .ToListAsync(cancellationToken);
+
+            if (matchingUsers.Count > 1)
+            {
+                logger.LogError(
+                    "External login rejected: duplicate active users found for normalized email {NormalizedEmail}",
+                    normalizedProviderEmail);
+                throw new Handmade.Application.Common.Exceptions.ApplicationException(
+                    "Duplicate users were found for this email address.");
+            }
+
+            var user = matchingUsers.SingleOrDefault();
 
             if (user is not null && user.IsBlocked)
             {

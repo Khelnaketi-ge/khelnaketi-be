@@ -45,7 +45,8 @@ public class AuthService(
         var emailAddress = email.Trim();
 
         var emailExists = await context.Users.AnyAsync(
-            x => x.NormalizedEmail == normalizedEmail,
+            x => x.NormalizedEmail == normalizedEmail
+                 || x.Email.Trim().ToUpper() == normalizedEmail,
             cancellationToken);
 
         if (emailExists)
@@ -372,7 +373,7 @@ public class AuthService(
 
     public Task ChangePasswordAsync(int userId, string oldPassword, string newPassword, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        throw new Handmade.Application.Common.Exceptions.ApplicationException("Change password is not implemented.");
     }
 
     public async Task SendEmailCodeAsync(int userId, CancellationToken cancellationToken)

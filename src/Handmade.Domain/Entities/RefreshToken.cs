@@ -1,5 +1,4 @@
 using Handmade.Domain.Common;
-// ReSharper disable All
 
 namespace Handmade.Domain.Entities;
 

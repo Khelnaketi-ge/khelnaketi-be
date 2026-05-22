@@ -34,8 +34,8 @@ public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionReq
     {
         var accessLevelClaim = context.User.Claims.FirstOrDefault(x => x.Type == Claims.AccessLevel);
 
-        if (int.TryParse(accessLevelClaim?.Value, out var numericAccessLevel)
-            && Enum.IsDefined(typeof(AccessLevel), numericAccessLevel))
+        if (short.TryParse(accessLevelClaim?.Value, out var numericAccessLevel)
+            && Enum.IsDefined((AccessLevel)numericAccessLevel))
         {
             return (AccessLevel)numericAccessLevel;
         }

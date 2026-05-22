@@ -28,8 +28,10 @@ public class AuditableEntityInterceptor(ICurrentUser currentUser, TimeProvider t
 
         foreach (var entry in context.ChangeTracker.Entries<IBaseAuditableEntity>())
         {
+            var hasChangedOwnedEntities = entry.HasChangedOwnedEntities();
+
             if (entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted)
-                && !entry.HasChangedOwnedEntities()) continue;
+                && !hasChangedOwnedEntities) continue;
             
             var utcNow = timeProvider.GetUtcNow();
             
@@ -39,13 +41,25 @@ public class AuditableEntityInterceptor(ICurrentUser currentUser, TimeProvider t
                     entry.Entity.Created = utcNow;
                     entry.Entity.CreatedBy = currentUser.Id;
                     break;
+                case EntityState.Modified:
+                    entry.Entity.Updated = utcNow;
+                    entry.Entity.UpdatedBy = currentUser.Id;
+                    break;
                 case EntityState.Deleted:
                     entry.State = EntityState.Modified;
                     entry.Entity.Deleted = true;
+                    entry.Entity.Updated = utcNow;
+                    entry.Entity.UpdatedBy = currentUser.Id;
+                    break;
+                default:
+                    if (hasChangedOwnedEntities)
+                    {
+                        entry.Entity.Updated = utcNow;
+                        entry.Entity.UpdatedBy = currentUser.Id;
+                    }
+
                     break;
             }
-            entry.Entity.Updated = utcNow;
-            entry.Entity.UpdatedBy = currentUser.Id;
         }
     }
 }

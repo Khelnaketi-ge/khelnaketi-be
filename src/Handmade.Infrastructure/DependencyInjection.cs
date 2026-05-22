@@ -28,6 +28,8 @@ public static class DependencyInjection
             (builder.Configuration.GetSection(nameof(JwtOptions)));
         builder.Services.ConfigureOptionsAsSingleton<SmtpOptions>(
             builder.Configuration.GetSection(nameof(SmtpOptions)));
+        builder.Services.ConfigureOptionsAsSingleton<SupabaseStorage>(
+            builder.Configuration.GetSection(nameof(SupabaseStorage)));
         
         // Connection string
         var connectionString = builder.Configuration.GetConnectionString("Supabase");
@@ -54,6 +56,8 @@ public static class DependencyInjection
         builder.Services.AddScoped<ITokenHasher, TokenHasher>();
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddScoped<IEmailSender, EmailSender>();
+        builder.Services.AddSingleton(_ => new HttpClient());
+        builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
         
         // Versioning
         builder.Services.AddApiVersioning(options =>

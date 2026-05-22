@@ -11,9 +11,6 @@ internal abstract class BaseAuditableEntityConfiguration<T> : IEntityTypeConfigu
         builder.Property(x => x.Created)
             .IsRequired();
 
-        builder.Property(x => x.Updated)
-            .IsRequired();
-
         builder.Property(x => x.Deleted)
             .HasDefaultValue(false);
 

@@ -1,6 +1,7 @@
 using Handmade.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
+using ApplicationException = Handmade.Application.Common.Exceptions.ApplicationException;
 
 namespace Handmade.Infrastructure.Auth.Policies;
 

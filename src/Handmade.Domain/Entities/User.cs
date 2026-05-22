@@ -15,7 +15,7 @@ public class User : BaseAuditableEntity<int>
     public string? PhoneNumber { get; set; }
     public string? NormalizedPhoneNumber { get; set; }
     public bool PhoneNumberVerified { get; set; }
-    
+        
     public string? PasswordHash { get; set; }
     public int TokenVersion { get; set; } = 1;
     public int PermissionVersion { get; set; } = 1;
@@ -28,4 +28,8 @@ public class User : BaseAuditableEntity<int>
     
     public ICollection<UserSession> Sessions { get; set; } = [];
     public ICollection<VerificationCode> VerificationCodes { get; set; } = [];
+    public ICollection<Brand> OwnedBrands { get; set; } = [];
+    public ICollection<BrandMember> BrandMemberships { get; set; } = [];
+    public ICollection<BrandInvitation> SentBrandInvitations { get; set; } = [];
+    public ICollection<ImageAsset> UploadedImages { get; set; } = [];
 }

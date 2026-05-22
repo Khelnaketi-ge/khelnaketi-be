@@ -16,7 +16,9 @@ public sealed class RegisterCommandHandlerValidation : AbstractValidator<Registe
             {
                 var normalizedEmail = NormalizeEmail(email);
                 return !await context.Users.AnyAsync(
-                    x => x.NormalizedEmail == normalizedEmail,cancellationToken);
+                    x => x.NormalizedEmail == normalizedEmail
+                         || x.Email.Trim().ToUpper() == normalizedEmail,
+                    cancellationToken);
             })
             .WithMessage("Email address is already registered");
 
