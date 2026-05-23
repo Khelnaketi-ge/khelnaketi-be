@@ -3,10 +3,10 @@ using Handmade.Domain.Enums;
 
 namespace Handmade.Domain.Entities;
 
-public class Brand : BaseAuditableEntity<int>
+public class Brand : BaseAuditableEntity<int>, INormalizedNameEntity
 {
     public required string Name { get; set; }
-    public required string NormalizedName { get; set; } 
+    public string NormalizedName { get; set; } = string.Empty;
     
     public string? LegalName { get; set; }
     public Guid? LogoImageId { get; set; }

@@ -3,7 +3,7 @@ using Handmade.Domain.Enums;
 
 namespace Handmade.Domain.Entities;
 
-public class Product : BaseAuditableEntity<int>
+public class Product : BaseAuditableEntity<int>, INormalizedNameEntity
 {
     public int BrandId { get; set; }
     public Brand Brand { get; set; } = null!;
@@ -12,7 +12,7 @@ public class Product : BaseAuditableEntity<int>
     public Category Category { get; set; } = null!;
 
     public required string Name { get; set; }
-    public required string NormalizedName { get; set; }
+    public string NormalizedName { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? Sku { get; set; }
 

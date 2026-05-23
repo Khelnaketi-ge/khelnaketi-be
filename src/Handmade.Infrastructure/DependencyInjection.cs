@@ -38,6 +38,7 @@ public static class DependencyInjection
         
         // Interceptors
         builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
+        builder.Services.AddScoped<ISaveChangesInterceptor, NormalizedTextInterceptor>();
         builder.Services.AddEFSecondLevelCache(options =>
             options.UseMemoryCacheProvider()
                 .UseCacheKeyPrefix("EF_")

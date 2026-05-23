@@ -1,8 +1,10 @@
 using Handmade.Application.Common.Exceptions;
 using Handmade.Application.Features.Brands.Commands.CreateBrand.Models;
 using Handmade.Application.Interfaces;
+using Handmade.Domain.Common;
 using Handmade.Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 
 namespace Handmade.Application.Features.Brands.Commands.CreateBrand;
 
@@ -10,13 +12,7 @@ public sealed record CreateBrandCommand(
     string Name,
     int OwnerUserId,
     string? LegalName,
-    UploadFileInput? Logo) : IRequest<CreateBrandDto>;
-
-public sealed record UploadFileInput(
-    Stream Content,
-    string FileName,
-    string ContentType,
-    long SizeBytes);
+    IFormFile? Logo) : IRequest<CreateBrandDto>;
 
 public sealed class CreateBrandCommandHandler(
     IApplicationDbContext context,
@@ -40,12 +36,14 @@ public sealed class CreateBrandCommandHandler(
 
             if (request.Logo is not null)
             {
+                await using var logoStream = request.Logo.OpenReadStream();
+
                 uploadedLogo = await imageStorage.UploadAsync(
                     new ImageUploadRequest(
-                        request.Logo.Content,
+                        logoStream,
                         request.Logo.FileName,
                         request.Logo.ContentType,
-                        request.Logo.SizeBytes,
+                        request.Logo.Length,
                         BrandLogoFolder),
                     cancellationToken);
 
@@ -66,7 +64,6 @@ public sealed class CreateBrandCommandHandler(
             var brand = new Brand
             {
                 Name = request.Name.Trim(),
-                NormalizedName = NormalizeName(request.Name),
                 LegalName = NormalizeOptional(request.LegalName),
                 LogoImageId = logoImage?.Id,
                 OwnerUserId = request.OwnerUserId
@@ -91,8 +88,6 @@ public sealed class CreateBrandCommandHandler(
             throw;
         }
     }
-
-    private static string NormalizeName(string name) => name.Trim().ToUpperInvariant();
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

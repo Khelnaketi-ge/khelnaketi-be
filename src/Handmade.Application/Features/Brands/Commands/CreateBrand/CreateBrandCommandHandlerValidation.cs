@@ -1,5 +1,6 @@
 using FluentValidation;
 using Handmade.Application.Interfaces;
+using Handmade.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace Handmade.Application.Features.Brands.Commands.CreateBrand;
@@ -13,7 +14,7 @@ public sealed class CreateBrandCommandHandlerValidation : AbstractValidator<Crea
             .MaximumLength(160).WithMessage("Brand name is too long")
             .MustAsync(async (name, cancellationToken) =>
             {
-                var normalizedName = NormalizeName(name);
+                var normalizedName = TextNormalizer.Normalize(name);
                 return !await context.Brands.AnyAsync(
                     x => x.NormalizedName == normalizedName,
                     cancellationToken);
@@ -38,10 +39,9 @@ public sealed class CreateBrandCommandHandlerValidation : AbstractValidator<Crea
             RuleFor(x => x.Logo!.ContentType)
                 .NotEmpty().WithMessage("Logo content type is required");
 
-            RuleFor(x => x.Logo!.SizeBytes)
+            RuleFor(x => x.Logo!.Length)
                 .GreaterThan(0).WithMessage("Logo size is required");
         });
     }
 
-    private static string NormalizeName(string name) => name.Trim().ToUpperInvariant();
 }

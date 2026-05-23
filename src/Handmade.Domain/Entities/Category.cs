@@ -2,10 +2,10 @@
 
 namespace Handmade.Domain.Entities;
 
-public class Category : BaseAuditableEntity<int>
+public class Category : BaseAuditableEntity<int>, INormalizedNameEntity
 {
     public required string Name { get; set; }
-    public required string NormalizedName { get; set; }
+    public string NormalizedName { get; set; } = string.Empty;
     public string? Description { get; set; }
 
     public int? ParentId { get; set; }
