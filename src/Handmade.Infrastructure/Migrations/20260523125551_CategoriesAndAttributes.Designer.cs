@@ -3,6 +3,7 @@ using System;
 using Handmade.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Handmade.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260523125551_CategoriesAndAttributes")]
+    partial class CategoriesAndAttributes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -565,107 +568,6 @@ namespace Handmade.Infrastructure.Migrations
                     b.ToTable("BrandRoles", (string)null);
                 });
 
-            modelBuilder.Entity("Handmade.Domain.Entities.Cart", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("Deleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<short>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("smallint")
-                        .HasDefaultValue((short)1);
-
-                    b.Property<DateTimeOffset?>("Updated")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Deleted")
-                        .HasFilter("\"Deleted\" = false");
-
-                    b.HasIndex("Status");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("UserId", "Status")
-                        .IsUnique()
-                        .HasFilter("\"Deleted\" = false AND \"Status\" = 1");
-
-                    b.ToTable("Carts", (string)null);
-                });
-
-            modelBuilder.Entity("Handmade.Domain.Entities.CartItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CartId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("Deleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Quantity")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
-
-                    b.Property<DateTimeOffset?>("Updated")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CartId");
-
-                    b.HasIndex("Deleted")
-                        .HasFilter("\"Deleted\" = false");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("CartId", "ProductId")
-                        .IsUnique()
-                        .HasFilter("\"Deleted\" = false");
-
-                    b.ToTable("CartItems", (string)null);
-                });
-
             modelBuilder.Entity("Handmade.Domain.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -868,150 +770,6 @@ namespace Handmade.Infrastructure.Migrations
                         .HasFilter("\"Deleted\" = false");
 
                     b.ToTable("ImageAssets", (string)null);
-                });
-
-            modelBuilder.Entity("Handmade.Domain.Entities.Product", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BrandId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("Deleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
-
-                    b.Property<bool>("IsInQuantity")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(180)
-                        .HasColumnType("character varying(180)");
-
-                    b.Property<string>("NormalizedName")
-                        .IsRequired()
-                        .HasMaxLength(180)
-                        .HasColumnType("character varying(180)");
-
-                    b.Property<decimal?>("Price")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<string>("Sku")
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)");
-
-                    b.Property<short>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("smallint")
-                        .HasDefaultValue((short)1);
-
-                    b.Property<DateTimeOffset?>("Updated")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BrandId");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("Deleted")
-                        .HasFilter("\"Deleted\" = false");
-
-                    b.HasIndex("NormalizedName");
-
-                    b.HasIndex("Status");
-
-                    b.HasIndex("BrandId", "Sku")
-                        .IsUnique()
-                        .HasFilter("\"Deleted\" = false AND \"Sku\" IS NOT NULL");
-
-                    b.ToTable("Products", (string)null);
-                });
-
-            modelBuilder.Entity("Handmade.Domain.Entities.ProductImage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("Deleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<Guid>("ImageId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsPrimary")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<int>("Order")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset?>("Updated")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Deleted")
-                        .HasFilter("\"Deleted\" = false");
-
-                    b.HasIndex("ImageId");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("ProductId", "ImageId")
-                        .IsUnique()
-                        .HasFilter("\"Deleted\" = false");
-
-                    b.HasIndex("ProductId", "IsPrimary")
-                        .IsUnique()
-                        .HasFilter("\"Deleted\" = false AND \"IsPrimary\" = true");
-
-                    b.ToTable("ProductImages", (string)null);
                 });
 
             modelBuilder.Entity("Handmade.Domain.Entities.RefreshToken", b =>
@@ -1506,36 +1264,6 @@ namespace Handmade.Infrastructure.Migrations
                     b.Navigation("Brand");
                 });
 
-            modelBuilder.Entity("Handmade.Domain.Entities.Cart", b =>
-                {
-                    b.HasOne("Handmade.Domain.Entities.User", "User")
-                        .WithMany("Carts")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Handmade.Domain.Entities.CartItem", b =>
-                {
-                    b.HasOne("Handmade.Domain.Entities.Cart", "Cart")
-                        .WithMany("Items")
-                        .HasForeignKey("CartId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Handmade.Domain.Entities.Product", "Product")
-                        .WithMany("CartItems")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Cart");
-
-                    b.Navigation("Product");
-                });
-
             modelBuilder.Entity("Handmade.Domain.Entities.Category", b =>
                 {
                     b.HasOne("Handmade.Domain.Entities.Category", "Parent")
@@ -1566,44 +1294,6 @@ namespace Handmade.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("UploadedByUser");
-                });
-
-            modelBuilder.Entity("Handmade.Domain.Entities.Product", b =>
-                {
-                    b.HasOne("Handmade.Domain.Entities.Brand", "Brand")
-                        .WithMany("Products")
-                        .HasForeignKey("BrandId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Handmade.Domain.Entities.Category", "Category")
-                        .WithMany("Products")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Brand");
-
-                    b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("Handmade.Domain.Entities.ProductImage", b =>
-                {
-                    b.HasOne("Handmade.Domain.Entities.ImageAsset", "Image")
-                        .WithMany()
-                        .HasForeignKey("ImageId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Handmade.Domain.Entities.Product", "Product")
-                        .WithMany("Images")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Image");
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("Handmade.Domain.Entities.RefreshToken", b =>
@@ -1662,8 +1352,6 @@ namespace Handmade.Infrastructure.Migrations
 
                     b.Navigation("PhoneNumbers");
 
-                    b.Navigation("Products");
-
                     b.Navigation("Roles");
                 });
 
@@ -1674,18 +1362,11 @@ namespace Handmade.Infrastructure.Migrations
                     b.Navigation("Members");
                 });
 
-            modelBuilder.Entity("Handmade.Domain.Entities.Cart", b =>
-                {
-                    b.Navigation("Items");
-                });
-
             modelBuilder.Entity("Handmade.Domain.Entities.Category", b =>
                 {
                     b.Navigation("CategoryAttributes");
 
                     b.Navigation("Children");
-
-                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("Handmade.Domain.Entities.CategoryAttribute", b =>
@@ -1693,18 +1374,9 @@ namespace Handmade.Infrastructure.Migrations
                     b.Navigation("Options");
                 });
 
-            modelBuilder.Entity("Handmade.Domain.Entities.Product", b =>
-                {
-                    b.Navigation("CartItems");
-
-                    b.Navigation("Images");
-                });
-
             modelBuilder.Entity("Handmade.Domain.Entities.User", b =>
                 {
                     b.Navigation("BrandMemberships");
-
-                    b.Navigation("Carts");
 
                     b.Navigation("OwnedBrands");
 

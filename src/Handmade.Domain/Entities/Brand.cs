@@ -23,4 +23,5 @@ public class Brand : BaseAuditableEntity<int>
     public ICollection<BrandAddress> Addresses { get; set; } = [];
     public ICollection<BrandEmailAddress> EmailAddresses { get; set; } = [];
     public ICollection<BrandPhoneNumber> PhoneNumbers { get; set; } = [];
+    public ICollection<Product> Products { get; set; } = [];
 }

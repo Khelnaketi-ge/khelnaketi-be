@@ -11,6 +11,7 @@
     <PackageReference Include="Asp.Versioning.Http" Version="8.1.1" />
     <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.1" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.1" />
+    <PackageReference Include="EFCoreSecondLevelCacheInterceptor.MemoryCache" Version="5.3.9" />
     <PackageReference Include="MailKit" Version="4.16.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="9.0.16" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.16" />

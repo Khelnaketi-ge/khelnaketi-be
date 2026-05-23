@@ -1,5 +1,6 @@
 using Ardalis.GuardClauses;
 using Asp.Versioning;
+using EFCoreSecondLevelCacheInterceptor;
 using Handmade.Application.Interfaces;
 using Handmade.Infrastructure.Auth;
 using Handmade.Infrastructure.Auth.Hashers;
@@ -37,12 +38,17 @@ public static class DependencyInjection
         
         // Interceptors
         builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
+        builder.Services.AddEFSecondLevelCache(options =>
+            options.UseMemoryCacheProvider()
+                .UseCacheKeyPrefix("EF_")
+                .UseDbCallsIfCachingProviderIsDown(TimeSpan.FromMinutes(1)));
         
         // Database
         builder.Services.AddDbContext<ApplicationDbContext>((provider, options) =>
         {
             options
                 .UseNpgsql(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
+                .AddInterceptors(provider.GetRequiredService<SecondLevelCacheInterceptor>())
                 .AddInterceptors(provider.GetServices<ISaveChangesInterceptor>());
         });
         
@@ -50,6 +56,7 @@ public static class DependencyInjection
         
         // Auth
         builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<IAccessTokenValidator, AccessTokenValidator>();
         builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
         builder.Services.AddScoped<IAuthTokenIssuer, AuthTokenIssuer>();
         builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -57,6 +64,8 @@ public static class DependencyInjection
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddScoped<IEmailSender, EmailSender>();
         builder.Services.AddSingleton(_ => new HttpClient());
+        
+        // Image
         builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
         
         // Versioning

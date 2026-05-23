@@ -32,4 +32,5 @@ public class User : BaseAuditableEntity<int>
     public ICollection<BrandMember> BrandMemberships { get; set; } = [];
     public ICollection<BrandInvitation> SentBrandInvitations { get; set; } = [];
     public ICollection<ImageAsset> UploadedImages { get; set; } = [];
+    public ICollection<Cart> Carts { get; set; } = [];
 }

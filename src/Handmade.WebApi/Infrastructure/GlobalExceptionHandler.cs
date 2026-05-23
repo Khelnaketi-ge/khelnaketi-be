@@ -30,7 +30,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
     {
         var exceptionType = exception.GetType();
 
-        var problemDetails = _exceptionHandlers.TryGetValue(exceptionType, out Func<Exception, ProblemDetails>? func)
+        var problemDetails = _exceptionHandlers.TryGetValue(exceptionType, out var func)
             ? func.Invoke(exception)
             : HandleUnhandledException(exception);
 

@@ -19,6 +19,13 @@ public interface IApplicationDbContext : IDisposable
     DbSet<BrandEmailAddress> BrandEmailAddresses { get; }
     DbSet<BrandPhoneNumber> BrandPhoneNumbers { get; }
     DbSet<ImageAsset> ImageAssets { get; }
+    DbSet<Category> Categories { get; }
+    DbSet<AttributeOption> AttributeOptions { get; }
+    DbSet<CategoryAttribute> CategoryAttributes { get; }
+    DbSet<Product> Products { get; }
+    DbSet<ProductImage> ProductImages { get; }
+    DbSet<Cart> Carts { get; }
+    DbSet<CartItem> CartItems { get; }
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
@@ -28,7 +27,7 @@ public static class DependencyInjection
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-            options.AddPolicy("AuthSensitive", httpContext =>
+            options.AddPolicy(RateLimiterPolicies.AuthSensitive, httpContext =>
                 RateLimitPartition.GetFixedWindowLimiter(
                     GetClientIp(httpContext),
                     _ => new FixedWindowRateLimiterOptions
@@ -38,7 +37,7 @@ public static class DependencyInjection
                         QueueLimit = 0
                     }));
 
-            options.AddPolicy("AuthEmail", httpContext =>
+            options.AddPolicy(RateLimiterPolicies.AuthEmail, httpContext =>
                 RateLimitPartition.GetFixedWindowLimiter(
                     GetClientIp(httpContext),
                     _ => new FixedWindowRateLimiterOptions
@@ -116,93 +115,15 @@ public static class DependencyInjection
                 {
                     OnTokenValidated = async context =>
                     {
-                        var principal = context.Principal;
+                        var accessTokenValidator =
+                            context.HttpContext.RequestServices.GetRequiredService<IAccessTokenValidator>();
+                        var result = await accessTokenValidator.ValidateAsync(
+                            context.Principal,
+                            context.HttpContext.RequestAborted);
 
-                        if (!int.TryParse(principal?.FindFirst(Claims.Id)?.Value, out var userId))
+                        if (!result.Succeeded)
                         {
-                            context.Fail("Missing or invalid user id claim.");
-                            return;
-                        }
-
-                        if (!Guid.TryParse(principal.FindFirst(Claims.SessionId)?.Value, out var sessionId))
-                        {
-                            context.Fail("Missing or invalid session id claim.");
-                            return;
-                        }
-
-                        if (!int.TryParse(principal.FindFirst(Claims.TokenVersion)?.Value, out var tokenVersion))
-                        {
-                            context.Fail("Missing or invalid token version claim.");
-                            return;
-                        }
-
-                        if (!int.TryParse(principal.FindFirst(Claims.PermissionVersion)?.Value, out var permissionVersion))
-                        {
-                            context.Fail("Missing or invalid permission version claim.");
-                            return;
-                        }
-
-                        var dbContext = context.HttpContext.RequestServices.GetRequiredService<IApplicationDbContext>();
-                        var cancellationToken = context.HttpContext.RequestAborted;
-
-                        var user = await dbContext.Users
-                            .AsNoTracking()
-                            .Where(x => x.Id == userId)
-                            .Select(x => new
-                            {
-                                x.Id,
-                                x.IsBlocked,
-                                x.TokenVersion,
-                                x.PermissionVersion
-                            })
-                            .FirstOrDefaultAsync(cancellationToken);
-
-                        if (user is null)
-                        {
-                            context.Fail("User does not exist.");
-                            return;
-                        }
-
-                        if (user.IsBlocked)
-                        {
-                            context.Fail("User is blocked.");
-                            return;
-                        }
-
-                        if (user.TokenVersion != tokenVersion)
-                        {
-                            context.Fail("Token version is invalid.");
-                            return;
-                        }
-
-                        if (user.PermissionVersion != permissionVersion)
-                        {
-                            context.Fail("Permission version is invalid.");
-                            return;
-                        }
-
-                        var session = await dbContext.UserSessions
-                            .FirstOrDefaultAsync(x => x.Id == sessionId && x.UserId == userId, cancellationToken);
-
-                        if (session is null)
-                        {
-                            context.Fail("Session does not exist.");
-                            return;
-                        }
-
-                        if (session.RevokedAt.HasValue)
-                        {
-                            context.Fail("Session is revoked.");
-                            return;
-                        }
-
-                        var timeProvider = context.HttpContext.RequestServices.GetRequiredService<TimeProvider>();
-                        var now = timeProvider.GetUtcNow();
-
-                        if (!session.LastUsedAt.HasValue || session.LastUsedAt.Value.AddMinutes(1) <= now)
-                        {
-                            session.LastUsedAt = now;
-                            await dbContext.SaveChangesAsync(cancellationToken);
+                            context.Fail(result.FailureMessage ?? "Access token validation failed.");
                         }
                     }
                 };

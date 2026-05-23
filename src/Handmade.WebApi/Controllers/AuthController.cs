@@ -24,7 +24,7 @@ public class AuthController(
     IGoogleAuthService googleAuthService) : ApiController(sender)
 {
     [HttpPost("register")]
-    [EnableRateLimiting("AuthEmail")]
+    [EnableRateLimiting(RateLimiterPolicies.AuthEmail)]
     public async Task<IActionResult> Register([FromBody] RegisterCommand command, CancellationToken cancellationToken)
     {
         await Sender.Send(command, cancellationToken);
@@ -32,14 +32,14 @@ public class AuthController(
     }
 
     [HttpPost("verify-email")]
-    [EnableRateLimiting("AuthSensitive")]
+    [EnableRateLimiting(RateLimiterPolicies.AuthSensitive)]
     public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailCommand command, CancellationToken cancellationToken)
     {
         return Ok(await Sender.Send(command, cancellationToken));
     }
 
     [HttpPost("login")]
-    [EnableRateLimiting("AuthSensitive")]
+    [EnableRateLimiting(RateLimiterPolicies.AuthSensitive)]
     public async Task<IActionResult> Login([FromBody] LoginCommand command, CancellationToken cancellationToken)
     {
         return Ok(await Sender.Send(command, cancellationToken));
@@ -52,7 +52,7 @@ public class AuthController(
     }
 
     [HttpPost("password-reset/request")]
-    [EnableRateLimiting("AuthEmail")]
+    [EnableRateLimiting(RateLimiterPolicies.AuthEmail)]
     public async Task<IActionResult> RequestPasswordReset([FromBody] RequestPasswordResetCommand command, CancellationToken cancellationToken)
     {
         await Sender.Send(command, cancellationToken);
@@ -60,7 +60,7 @@ public class AuthController(
     }
 
     [HttpPost("codes/resend")]
-    [EnableRateLimiting("AuthEmail")]
+    [EnableRateLimiting(RateLimiterPolicies.AuthEmail)]
     public async Task<IActionResult> ResendVerificationCode([FromBody] ResendVerificationCodeCommand command, CancellationToken cancellationToken)
     {
         await Sender.Send(command, cancellationToken);
@@ -68,7 +68,7 @@ public class AuthController(
     }
 
     [HttpPost("password-reset/confirm")]
-    [EnableRateLimiting("AuthSensitive")]
+    [EnableRateLimiting(RateLimiterPolicies.AuthSensitive)]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand command, CancellationToken cancellationToken)
     {
         await Sender.Send(command, cancellationToken);
