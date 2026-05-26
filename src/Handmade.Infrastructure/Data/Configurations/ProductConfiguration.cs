@@ -33,7 +33,7 @@ internal class ProductConfiguration : BaseAuditableEntityConfiguration<Product>
         builder.Property(x => x.Price)
             .HasPrecision(18, 2);
 
-        builder.Property(x => x.IsInQuantity)
+        builder.Property(x => x.IsInStock)
             .HasDefaultValue(false);
 
         builder.Property(x => x.Status)

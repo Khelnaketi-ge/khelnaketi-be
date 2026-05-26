@@ -17,9 +17,10 @@ public class Product : BaseAuditableEntity<int>, INormalizedNameEntity
     public string? Sku { get; set; }
 
     public decimal? Price { get; set; }
-    public bool IsInQuantity { get; set; }
+    public bool IsInStock { get; set; }
 
     public ProductStatus Status { get; set; } = ProductStatus.Draft;
     public ICollection<ProductImage> Images { get; set; } = [];
+    public ICollection<ProductAttributeValue> AttributeValues { get; set; } = [];
     public ICollection<CartItem> CartItems { get; set; } = [];
 }

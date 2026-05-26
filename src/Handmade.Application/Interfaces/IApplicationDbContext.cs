@@ -21,6 +21,7 @@ public interface IApplicationDbContext : IDisposable
     DbSet<AttributeOption> AttributeOptions { get; }
     DbSet<CategoryAttribute> CategoryAttributes { get; }
     DbSet<Product> Products { get; }
+    DbSet<ProductAttributeValue> ProductAttributeValues { get; }
     DbSet<ProductImage> ProductImages { get; }
     DbSet<Cart> Carts { get; }
     DbSet<CartItem> CartItems { get; }
