@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Handmade.Application.Common.Models.Auth;
 using Handmade.Application.Features.Auth.Commands.ExternalLogin;
+using Handmade.Application.Features.Auth.Commands.PanelExternalLogin;
 using Handmade.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
@@ -10,23 +11,34 @@ namespace Handmade.WebApi.Services;
 
 public interface IGoogleAuthService
 {
-    AuthenticationProperties CreateChallengeProperties(string? redirectUri);
-    Task<TokensModel?> HandleCallbackAsync(CancellationToken cancellationToken);
+    AuthenticationProperties CreateChallengeProperties(string? redirectUri, string? returnUrl = null);
+    Task<TokensModel?> HandleCallbackAsync(bool requireBrandOwner, CancellationToken cancellationToken);
+    string? GetReturnUrl();
 }
 
 public sealed class GoogleAuthService(
     IHttpContextAccessor httpContextAccessor,
     ISender sender) : IGoogleAuthService
 {
-    public AuthenticationProperties CreateChallengeProperties(string? redirectUri)
+    private const string ReturnUrlKey = "returnUrl";
+    private string? returnUrl;
+
+    public AuthenticationProperties CreateChallengeProperties(string? redirectUri, string? returnUrl = null)
     {
-        return new AuthenticationProperties
+        var properties = new AuthenticationProperties
         {
             RedirectUri = redirectUri
         };
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+        {
+            properties.Items[ReturnUrlKey] = returnUrl;
+        }
+
+        return properties;
     }
 
-    public async Task<TokensModel?> HandleCallbackAsync(CancellationToken cancellationToken)
+    public async Task<TokensModel?> HandleCallbackAsync(bool requireBrandOwner, CancellationToken cancellationToken)
     {
         var httpContext = httpContextAccessor.HttpContext
             ?? throw new InvalidOperationException("HTTP context is required for Google authentication.");
@@ -38,6 +50,8 @@ public sealed class GoogleAuthService(
             return null;
         }
 
+        returnUrl = GetReturnUrl(result.Properties);
+
         var providerUserId = result.Principal.FindFirstValue(ClaimTypes.NameIdentifier);
         var email = result.Principal.FindFirstValue(ClaimTypes.Email);
         var displayName = result.Principal.FindFirstValue(ClaimTypes.Name);
@@ -48,6 +62,18 @@ public sealed class GoogleAuthService(
 
         await httpContext.SignOutAsync("External");
 
+        if (requireBrandOwner)
+        {
+            return await sender.Send(
+                new PanelExternalLoginCommand(
+                    Provider.Google,
+                    providerUserId ?? string.Empty,
+                    email,
+                    emailVerified,
+                    displayName),
+                cancellationToken);
+        }
+
         return await sender.Send(
             new ExternalLoginCommand(
                 Provider.Google,
@@ -56,5 +82,30 @@ public sealed class GoogleAuthService(
                 emailVerified,
                 displayName),
             cancellationToken);
+    }
+
+    public string? GetReturnUrl()
+    {
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+        {
+            return returnUrl;
+        }
+
+        var httpContext = httpContextAccessor.HttpContext
+            ?? throw new InvalidOperationException("HTTP context is required for Google authentication.");
+
+        var properties = httpContext.Features.Get<IAuthenticateResultFeature>()?
+            .AuthenticateResult?
+            .Properties;
+
+        return GetReturnUrl(properties);
+    }
+
+    private static string? GetReturnUrl(AuthenticationProperties? properties)
+    {
+        return properties?.Items is not null
+            && properties.Items.TryGetValue(ReturnUrlKey, out var returnUrl)
+            ? returnUrl
+            : null;
     }
 }

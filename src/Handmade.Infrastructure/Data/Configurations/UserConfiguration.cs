@@ -44,9 +44,6 @@ internal class UserConfiguration : BaseAuditableEntityConfiguration<User>
         builder.Property(x => x.TokenVersion)
             .HasDefaultValue(1);
 
-        builder.Property(x => x.PermissionVersion)
-            .HasDefaultValue(1);
-
         builder.Property(x => x.AccessFailedCount)
             .HasDefaultValue((short)0);
 

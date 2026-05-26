@@ -55,7 +55,6 @@ namespace Handmade.Infrastructure.Migrations
                     PhoneNumberVerified = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     PasswordHash = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
                     TokenVersion = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
-                    PermissionVersion = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
                     AccessFailedCount = table.Column<short>(type: "smallint", nullable: false, defaultValue: (short)0),
                     LockoutEnd = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     IsBlocked = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
@@ -426,35 +425,6 @@ namespace Handmade.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "BrandRoles",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    BrandId = table.Column<int>(type: "integer", nullable: false),
-                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    NormalizedName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    IsSystemRole = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    Permissions = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
-                    Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    Updated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    Deleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_BrandRoles", x => x.Id);
-                    table.UniqueConstraint("AK_BrandRoles_BrandId_Id", x => new { x.BrandId, x.Id });
-                    table.ForeignKey(
-                        name: "FK_BrandRoles_Brands_BrandId",
-                        column: x => x.BrandId,
-                        principalTable: "Brands",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Products",
                 columns: table => new
                 {
@@ -488,88 +458,6 @@ namespace Handmade.Infrastructure.Migrations
                         name: "FK_Products_Categories_CategoryId",
                         column: x => x.CategoryId,
                         principalTable: "Categories",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "BrandInvitations",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    BrandId = table.Column<int>(type: "integer", nullable: false),
-                    Email = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
-                    NormalizedEmail = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
-                    RoleId = table.Column<int>(type: "integer", nullable: false),
-                    InvitedByUserId = table.Column<int>(type: "integer", nullable: false),
-                    TokenHash = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
-                    ExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    AcceptedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    RevokedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    Updated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    Deleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_BrandInvitations", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_BrandInvitations_BrandRoles_BrandId_RoleId",
-                        columns: x => new { x.BrandId, x.RoleId },
-                        principalTable: "BrandRoles",
-                        principalColumns: new[] { "BrandId", "Id" },
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_BrandInvitations_Brands_BrandId",
-                        column: x => x.BrandId,
-                        principalTable: "Brands",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_BrandInvitations_Users_InvitedByUserId",
-                        column: x => x.InvitedByUserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "BrandMembers",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    BrandId = table.Column<int>(type: "integer", nullable: false),
-                    UserId = table.Column<int>(type: "integer", nullable: false),
-                    RoleId = table.Column<int>(type: "integer", nullable: false),
-                    Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    Updated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    Deleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_BrandMembers", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_BrandMembers_BrandRoles_BrandId_RoleId",
-                        columns: x => new { x.BrandId, x.RoleId },
-                        principalTable: "BrandRoles",
-                        principalColumns: new[] { "BrandId", "Id" },
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_BrandMembers_Brands_BrandId",
-                        column: x => x.BrandId,
-                        principalTable: "Brands",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_BrandMembers_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -701,84 +589,6 @@ namespace Handmade.Infrastructure.Migrations
                 filter: "\"Deleted\" = false");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BrandInvitations_BrandId",
-                table: "BrandInvitations",
-                column: "BrandId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandInvitations_BrandId_NormalizedEmail",
-                table: "BrandInvitations",
-                columns: new[] { "BrandId", "NormalizedEmail" },
-                unique: true,
-                filter: "\"Deleted\" = false AND \"AcceptedAt\" IS NULL AND \"RevokedAt\" IS NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandInvitations_BrandId_RoleId",
-                table: "BrandInvitations",
-                columns: new[] { "BrandId", "RoleId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandInvitations_Deleted",
-                table: "BrandInvitations",
-                column: "Deleted",
-                filter: "\"Deleted\" = false");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandInvitations_ExpiresAt",
-                table: "BrandInvitations",
-                column: "ExpiresAt");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandInvitations_InvitedByUserId",
-                table: "BrandInvitations",
-                column: "InvitedByUserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandInvitations_RoleId",
-                table: "BrandInvitations",
-                column: "RoleId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandInvitations_TokenHash",
-                table: "BrandInvitations",
-                column: "TokenHash",
-                unique: true,
-                filter: "\"Deleted\" = false");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandMembers_BrandId",
-                table: "BrandMembers",
-                column: "BrandId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandMembers_BrandId_RoleId",
-                table: "BrandMembers",
-                columns: new[] { "BrandId", "RoleId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandMembers_BrandId_UserId",
-                table: "BrandMembers",
-                columns: new[] { "BrandId", "UserId" },
-                unique: true,
-                filter: "\"Deleted\" = false");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandMembers_Deleted",
-                table: "BrandMembers",
-                column: "Deleted",
-                filter: "\"Deleted\" = false");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandMembers_RoleId",
-                table: "BrandMembers",
-                column: "RoleId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandMembers_UserId",
-                table: "BrandMembers",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_BrandPhoneNumbers_BrandId",
                 table: "BrandPhoneNumbers",
                 column: "BrandId");
@@ -800,24 +610,6 @@ namespace Handmade.Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_BrandPhoneNumbers_Deleted",
                 table: "BrandPhoneNumbers",
-                column: "Deleted",
-                filter: "\"Deleted\" = false");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandRoles_BrandId",
-                table: "BrandRoles",
-                column: "BrandId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandRoles_BrandId_NormalizedName",
-                table: "BrandRoles",
-                columns: new[] { "BrandId", "NormalizedName" },
-                unique: true,
-                filter: "\"Deleted\" = false");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BrandRoles_Deleted",
-                table: "BrandRoles",
                 column: "Deleted",
                 filter: "\"Deleted\" = false");
 
@@ -1151,12 +943,6 @@ namespace Handmade.Infrastructure.Migrations
                 name: "BrandEmailAddresses");
 
             migrationBuilder.DropTable(
-                name: "BrandInvitations");
-
-            migrationBuilder.DropTable(
-                name: "BrandMembers");
-
-            migrationBuilder.DropTable(
                 name: "BrandPhoneNumbers");
 
             migrationBuilder.DropTable(
@@ -1176,9 +962,6 @@ namespace Handmade.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "CategoryAttributes");
-
-            migrationBuilder.DropTable(
-                name: "BrandRoles");
 
             migrationBuilder.DropTable(
                 name: "Carts");

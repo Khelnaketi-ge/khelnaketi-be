@@ -17,9 +17,6 @@ public class Brand : BaseAuditableEntity<int>, INormalizedNameEntity
     
     public BrandStatus Status { get; set; } = BrandStatus.Active;
 
-    public ICollection<BrandRole> Roles { get; set; } = [];
-    public ICollection<BrandMember> Members { get; set; } = [];
-    public ICollection<BrandInvitation> Invitations { get; set; } = [];
     public ICollection<BrandAddress> Addresses { get; set; } = [];
     public ICollection<BrandEmailAddress> EmailAddresses { get; set; } = [];
     public ICollection<BrandPhoneNumber> PhoneNumbers { get; set; } = [];

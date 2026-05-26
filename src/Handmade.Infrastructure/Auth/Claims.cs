@@ -6,9 +6,8 @@ public static class Claims
     public const string SessionId = "sid";
     public const string AccessLevel = "al";
     public const string SuperAdmin = "sa";
-    public const string Permissions = "per";
+    public const string BrandOwner = "bo";
     public const string EmailVerified = "ev";
     public const string PhoneVerified = "pv";
     public const string TokenVersion = "tv";
-    public const string PermissionVersion = "pmv";
 }

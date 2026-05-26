@@ -10,8 +10,8 @@ public interface IAuthService
         string email, string password, 
         string confirmPassword, CancellationToken cancellationToken);
     Task<TokensModel> LoginAsync(string email, string password, CancellationToken cancellationToken);
+    Task<TokensModel> PanelLoginAsync(string email, string password, CancellationToken cancellationToken);
     Task<TokensModel> RefreshAsync(string accessToken, string refreshToken, CancellationToken cancellationToken);
-    Task LogoutAsync(int userId, Guid sessionId, CancellationToken cancellationToken);
     Task RequestPasswordResetAsync(string email, CancellationToken cancellationToken);
     Task ResetPasswordAsync(
         string email,

@@ -17,6 +17,19 @@ public sealed class GoogleAuthService(
 {
     public async Task<TokensModel> ExternalLoginAsync(ExternalLoginModel login, CancellationToken cancellationToken)
     {
+        return await ExternalLoginAsync(login, requireBrandOwner: false, cancellationToken);
+    }
+
+    public async Task<TokensModel> PanelExternalLoginAsync(ExternalLoginModel login, CancellationToken cancellationToken)
+    {
+        return await ExternalLoginAsync(login, requireBrandOwner: true, cancellationToken);
+    }
+
+    private async Task<TokensModel> ExternalLoginAsync(
+        ExternalLoginModel login,
+        bool requireBrandOwner,
+        CancellationToken cancellationToken)
+    {
         if (login.Provider != Provider.Google)
         {
             logger.LogWarning("External login rejected: unsupported provider {Provider}", login.Provider);
@@ -54,6 +67,7 @@ public sealed class GoogleAuthService(
                     providerEmail,
                     displayName,
                     now,
+                    requireBrandOwner,
                     cancellationToken);
 
                 await transaction.CommitAsync(cancellationToken);
@@ -93,8 +107,19 @@ public sealed class GoogleAuthService(
                 throw new UnauthorizedException(UnauthorizedErrors.UserBlocked);
             }
 
+            if (requireBrandOwner && user is null)
+            {
+                logger.LogWarning("Panel external login rejected: no existing user found for Google email");
+                throw new UnauthorizedException(UnauthorizedErrors.UserNotFound);
+            }
+
             var createdUser = user is null;
             user ??= CreateUserFromGoogle(providerEmail!, normalizedProviderEmail, displayName);
+
+            if (requireBrandOwner)
+            {
+                await EnsureBrandOwnerAsync(user.Id, cancellationToken);
+            }
 
             if (createdUser)
             {
@@ -141,6 +166,7 @@ public sealed class GoogleAuthService(
         string? providerEmail,
         string? displayName,
         DateTimeOffset now,
+        bool requireBrandOwner,
         CancellationToken cancellationToken)
     {
         if (externalLogin.User.IsBlocked)
@@ -149,6 +175,11 @@ public sealed class GoogleAuthService(
                 "External login rejected: linked user {UserId} is blocked for Google",
                 externalLogin.UserId);
             throw new UnauthorizedException(UnauthorizedErrors.UserBlocked);
+        }
+
+        if (requireBrandOwner)
+        {
+            await EnsureBrandOwnerAsync(externalLogin.UserId, cancellationToken);
         }
 
         externalLogin.ProviderEmail = Truncate(providerEmail, 320);
@@ -183,6 +214,16 @@ public sealed class GoogleAuthService(
     }
 
     private static string NormalizeEmail(string email) => email.Trim().ToUpperInvariant();
+
+    private async Task EnsureBrandOwnerAsync(int userId, CancellationToken cancellationToken)
+    {
+        var ownsBrand = await context.Brands.AnyAsync(x => x.OwnerUserId == userId, cancellationToken);
+
+        if (!ownsBrand)
+        {
+            throw new UnauthorizedException(UnauthorizedErrors.BrandOwnerRequired);
+        }
+    }
 
     private static (string firstName, string lastName) SplitDisplayName(string? displayName)
     {

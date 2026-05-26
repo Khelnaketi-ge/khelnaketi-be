@@ -29,11 +29,6 @@ public sealed class AccessTokenValidator(
             return AccessTokenValidationResult.Failure("Missing or invalid token version claim.");
         }
 
-        if (!TryGetClaim<int>(principal, Claims.PermissionVersion, int.TryParse, out var permissionVersion))
-        {
-            return AccessTokenValidationResult.Failure("Missing or invalid permission version claim.");
-        }
-
         var user = await context.Users
             .AsNoTracking()
             .Where(x => x.Id == userId)
@@ -41,8 +36,7 @@ public sealed class AccessTokenValidator(
             {
                 x.Id,
                 x.IsBlocked,
-                x.TokenVersion,
-                x.PermissionVersion
+                x.TokenVersion
             })
             .Cacheable(CacheExpirationMode.Absolute, TimeSpan.FromSeconds(30))
             .FirstOrDefaultAsync(cancellationToken);
@@ -60,11 +54,6 @@ public sealed class AccessTokenValidator(
         if (user.TokenVersion != tokenVersion)
         {
             return AccessTokenValidationResult.Failure("Token version is invalid.");
-        }
-
-        if (user.PermissionVersion != permissionVersion)
-        {
-            return AccessTokenValidationResult.Failure("Permission version is invalid.");
         }
 
         var session = await context.UserSessions

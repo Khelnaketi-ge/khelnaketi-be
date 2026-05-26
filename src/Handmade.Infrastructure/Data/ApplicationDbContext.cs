@@ -14,14 +14,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<VerificationCode> VerificationCodes => Set<VerificationCode>();
     public DbSet<Brand> Brands => Set<Brand>();
-    public DbSet<BrandRole> BrandRoles => Set<BrandRole>();
-    public DbSet<BrandMember> BrandMembers => Set<BrandMember>();
-    public DbSet<BrandInvitation> BrandInvitations => Set<BrandInvitation>();
     public DbSet<BrandAddress> BrandAddresses => Set<BrandAddress>();
     public DbSet<BrandEmailAddress> BrandEmailAddresses => Set<BrandEmailAddress>();
     public DbSet<BrandPhoneNumber> BrandPhoneNumbers => Set<BrandPhoneNumber>();
     public DbSet<ImageAsset> ImageAssets => Set<ImageAsset>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<ProductAttribute> ProductAttributes => Set<ProductAttribute>();
     public DbSet<AttributeOption> AttributeOptions => Set<AttributeOption>();
     public DbSet<CategoryAttribute> CategoryAttributes => Set<CategoryAttribute>();
     public DbSet<Product> Products => Set<Product>();

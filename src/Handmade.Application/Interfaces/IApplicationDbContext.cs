@@ -12,14 +12,12 @@ public interface IApplicationDbContext : IDisposable
     DbSet<RefreshToken> RefreshTokens { get; }
     DbSet<VerificationCode> VerificationCodes { get; }
     DbSet<Brand> Brands { get; }
-    DbSet<BrandRole> BrandRoles { get; }
-    DbSet<BrandMember> BrandMembers { get; }
-    DbSet<BrandInvitation> BrandInvitations { get; }
     DbSet<BrandAddress> BrandAddresses { get; }
     DbSet<BrandEmailAddress> BrandEmailAddresses { get; }
     DbSet<BrandPhoneNumber> BrandPhoneNumbers { get; }
     DbSet<ImageAsset> ImageAssets { get; }
     DbSet<Category> Categories { get; }
+    DbSet<ProductAttribute> ProductAttributes { get; }
     DbSet<AttributeOption> AttributeOptions { get; }
     DbSet<CategoryAttribute> CategoryAttributes { get; }
     DbSet<Product> Products { get; }

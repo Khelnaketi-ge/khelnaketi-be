@@ -31,7 +31,14 @@ public static class MiddlewareConfiguration
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
-            app.MapScalarApiReference();
+            app.MapScalarApiReference(options =>
+            {
+                options
+                    .WithClassicLayout()
+                    .WithTheme(ScalarTheme.BluePlanet)
+                    .AddPreferredSecuritySchemes(["Bearer"])
+                    .EnablePersistentAuthentication();
+            });
         }
         
         // Https
@@ -43,6 +50,7 @@ public static class MiddlewareConfiguration
         // Middlewares
         app.UseRequestLocalization(localizationOptions);
         app.UseRouting();
+        app.UseCors(CorsPolicies.LocalFrontend);
         app.UseRateLimiter();
         app.UseAuthentication();
         app.UseAuthorization();

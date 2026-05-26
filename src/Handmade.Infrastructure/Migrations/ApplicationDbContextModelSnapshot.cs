@@ -30,9 +30,6 @@ namespace Handmade.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CategoryAttributeId")
-                        .HasColumnType("integer");
-
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
 
@@ -54,6 +51,9 @@ namespace Handmade.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0);
 
+                    b.Property<int>("ProductAttributeId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset?>("Updated")
                         .HasColumnType("timestamp with time zone");
 
@@ -67,12 +67,12 @@ namespace Handmade.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryAttributeId");
-
                     b.HasIndex("Deleted")
                         .HasFilter("\"Deleted\" = false");
 
-                    b.HasIndex("CategoryAttributeId", "NormalizedValue")
+                    b.HasIndex("ProductAttributeId");
+
+                    b.HasIndex("ProductAttributeId", "NormalizedValue")
                         .IsUnique()
                         .HasFilter("\"Deleted\" = false");
 
@@ -295,144 +295,6 @@ namespace Handmade.Infrastructure.Migrations
                     b.ToTable("BrandEmailAddresses", (string)null);
                 });
 
-            modelBuilder.Entity("Handmade.Domain.Entities.BrandInvitation", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTimeOffset?>("AcceptedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("BrandId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("Deleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(320)
-                        .HasColumnType("character varying(320)");
-
-                    b.Property<DateTimeOffset>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("InvitedByUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("NormalizedEmail")
-                        .IsRequired()
-                        .HasMaxLength(320)
-                        .HasColumnType("character varying(320)");
-
-                    b.Property<DateTimeOffset?>("RevokedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("RoleId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
-
-                    b.Property<DateTimeOffset?>("Updated")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BrandId");
-
-                    b.HasIndex("Deleted")
-                        .HasFilter("\"Deleted\" = false");
-
-                    b.HasIndex("ExpiresAt");
-
-                    b.HasIndex("InvitedByUserId");
-
-                    b.HasIndex("RoleId");
-
-                    b.HasIndex("TokenHash")
-                        .IsUnique()
-                        .HasFilter("\"Deleted\" = false");
-
-                    b.HasIndex("BrandId", "NormalizedEmail")
-                        .IsUnique()
-                        .HasFilter("\"Deleted\" = false AND \"AcceptedAt\" IS NULL AND \"RevokedAt\" IS NULL");
-
-                    b.HasIndex("BrandId", "RoleId");
-
-                    b.ToTable("BrandInvitations", (string)null);
-                });
-
-            modelBuilder.Entity("Handmade.Domain.Entities.BrandMember", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BrandId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("Deleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<int>("RoleId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset?>("Updated")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BrandId");
-
-                    b.HasIndex("Deleted")
-                        .HasFilter("\"Deleted\" = false");
-
-                    b.HasIndex("RoleId");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("BrandId", "RoleId");
-
-                    b.HasIndex("BrandId", "UserId")
-                        .IsUnique()
-                        .HasFilter("\"Deleted\" = false");
-
-                    b.ToTable("BrandMembers", (string)null);
-                });
-
             modelBuilder.Entity("Handmade.Domain.Entities.BrandPhoneNumber", b =>
                 {
                     b.Property<int>("Id")
@@ -501,68 +363,6 @@ namespace Handmade.Infrastructure.Migrations
                         .HasFilter("\"Deleted\" = false");
 
                     b.ToTable("BrandPhoneNumbers", (string)null);
-                });
-
-            modelBuilder.Entity("Handmade.Domain.Entities.BrandRole", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BrandId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("Deleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("IsSystemRole")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("NormalizedName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int>("Permissions")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<DateTimeOffset?>("Updated")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BrandId");
-
-                    b.HasIndex("Deleted")
-                        .HasFilter("\"Deleted\" = false");
-
-                    b.HasIndex("BrandId", "NormalizedName")
-                        .IsUnique()
-                        .HasFilter("\"Deleted\" = false");
-
-                    b.ToTable("BrandRoles", (string)null);
                 });
 
             modelBuilder.Entity("Handmade.Domain.Entities.Cart", b =>
@@ -758,27 +558,13 @@ namespace Handmade.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(160)
-                        .HasColumnType("character varying(160)");
-
-                    b.Property<string>("NormalizedName")
-                        .IsRequired()
-                        .HasMaxLength(160)
-                        .HasColumnType("character varying(160)");
-
                     b.Property<int>("Order")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(0);
 
-                    b.Property<short>("Type")
-                        .HasColumnType("smallint");
-
-                    b.Property<string>("Unit")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                    b.Property<int>("ProductAttributeId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("Updated")
                         .HasColumnType("timestamp with time zone");
@@ -793,7 +579,9 @@ namespace Handmade.Infrastructure.Migrations
                     b.HasIndex("Deleted")
                         .HasFilter("\"Deleted\" = false");
 
-                    b.HasIndex("CategoryId", "NormalizedName")
+                    b.HasIndex("ProductAttributeId");
+
+                    b.HasIndex("CategoryId", "ProductAttributeId")
                         .IsUnique()
                         .HasFilter("\"Deleted\" = false");
 
@@ -951,6 +739,62 @@ namespace Handmade.Infrastructure.Migrations
                         .HasFilter("\"Deleted\" = false AND \"Sku\" IS NOT NULL");
 
                     b.ToTable("Products", (string)null);
+                });
+
+            modelBuilder.Entity("Handmade.Domain.Entities.ProductAttribute", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<short>("Type")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset?>("Updated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Deleted")
+                        .HasFilter("\"Deleted\" = false");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasFilter("\"Deleted\" = false");
+
+                    b.HasIndex("Type");
+
+                    b.ToTable("ProductAttributes", (string)null);
                 });
 
             modelBuilder.Entity("Handmade.Domain.Entities.ProductImage", b =>
@@ -1148,11 +992,6 @@ namespace Handmade.Infrastructure.Migrations
                     b.Property<string>("PasswordHash")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
-
-                    b.Property<int>("PermissionVersion")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
 
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(32)
@@ -1379,13 +1218,13 @@ namespace Handmade.Infrastructure.Migrations
 
             modelBuilder.Entity("Handmade.Domain.Entities.AttributeOption", b =>
                 {
-                    b.HasOne("Handmade.Domain.Entities.CategoryAttribute", "CategoryAttribute")
+                    b.HasOne("Handmade.Domain.Entities.ProductAttribute", "ProductAttribute")
                         .WithMany("Options")
-                        .HasForeignKey("CategoryAttributeId")
+                        .HasForeignKey("ProductAttributeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("CategoryAttribute");
+                    b.Navigation("ProductAttribute");
                 });
 
             modelBuilder.Entity("Handmade.Domain.Entities.Brand", b =>
@@ -1428,77 +1267,10 @@ namespace Handmade.Infrastructure.Migrations
                     b.Navigation("Brand");
                 });
 
-            modelBuilder.Entity("Handmade.Domain.Entities.BrandInvitation", b =>
-                {
-                    b.HasOne("Handmade.Domain.Entities.Brand", "Brand")
-                        .WithMany("Invitations")
-                        .HasForeignKey("BrandId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Handmade.Domain.Entities.User", "InvitedByUser")
-                        .WithMany("SentBrandInvitations")
-                        .HasForeignKey("InvitedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Handmade.Domain.Entities.BrandRole", "Role")
-                        .WithMany("Invitations")
-                        .HasForeignKey("BrandId", "RoleId")
-                        .HasPrincipalKey("BrandId", "Id")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Brand");
-
-                    b.Navigation("InvitedByUser");
-
-                    b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("Handmade.Domain.Entities.BrandMember", b =>
-                {
-                    b.HasOne("Handmade.Domain.Entities.Brand", "Brand")
-                        .WithMany("Members")
-                        .HasForeignKey("BrandId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Handmade.Domain.Entities.User", "User")
-                        .WithMany("BrandMemberships")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Handmade.Domain.Entities.BrandRole", "Role")
-                        .WithMany("Members")
-                        .HasForeignKey("BrandId", "RoleId")
-                        .HasPrincipalKey("BrandId", "Id")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Brand");
-
-                    b.Navigation("Role");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Handmade.Domain.Entities.BrandPhoneNumber", b =>
                 {
                     b.HasOne("Handmade.Domain.Entities.Brand", "Brand")
                         .WithMany("PhoneNumbers")
-                        .HasForeignKey("BrandId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Brand");
-                });
-
-            modelBuilder.Entity("Handmade.Domain.Entities.BrandRole", b =>
-                {
-                    b.HasOne("Handmade.Domain.Entities.Brand", "Brand")
-                        .WithMany("Roles")
                         .HasForeignKey("BrandId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1554,7 +1326,15 @@ namespace Handmade.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Handmade.Domain.Entities.ProductAttribute", "ProductAttribute")
+                        .WithMany("CategoryAttributes")
+                        .HasForeignKey("ProductAttributeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Category");
+
+                    b.Navigation("ProductAttribute");
                 });
 
             modelBuilder.Entity("Handmade.Domain.Entities.ImageAsset", b =>
@@ -1656,22 +1436,9 @@ namespace Handmade.Infrastructure.Migrations
 
                     b.Navigation("EmailAddresses");
 
-                    b.Navigation("Invitations");
-
-                    b.Navigation("Members");
-
                     b.Navigation("PhoneNumbers");
 
                     b.Navigation("Products");
-
-                    b.Navigation("Roles");
-                });
-
-            modelBuilder.Entity("Handmade.Domain.Entities.BrandRole", b =>
-                {
-                    b.Navigation("Invitations");
-
-                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("Handmade.Domain.Entities.Cart", b =>
@@ -1688,11 +1455,6 @@ namespace Handmade.Infrastructure.Migrations
                     b.Navigation("Products");
                 });
 
-            modelBuilder.Entity("Handmade.Domain.Entities.CategoryAttribute", b =>
-                {
-                    b.Navigation("Options");
-                });
-
             modelBuilder.Entity("Handmade.Domain.Entities.Product", b =>
                 {
                     b.Navigation("CartItems");
@@ -1700,15 +1462,18 @@ namespace Handmade.Infrastructure.Migrations
                     b.Navigation("Images");
                 });
 
+            modelBuilder.Entity("Handmade.Domain.Entities.ProductAttribute", b =>
+                {
+                    b.Navigation("CategoryAttributes");
+
+                    b.Navigation("Options");
+                });
+
             modelBuilder.Entity("Handmade.Domain.Entities.User", b =>
                 {
-                    b.Navigation("BrandMemberships");
-
                     b.Navigation("Carts");
 
                     b.Navigation("OwnedBrands");
-
-                    b.Navigation("SentBrandInvitations");
 
                     b.Navigation("Sessions");
 

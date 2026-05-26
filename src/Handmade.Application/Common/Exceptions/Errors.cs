@@ -9,7 +9,9 @@ public static class UnauthorizedErrors
     public static readonly Error UserLockedOut = new(
         nameof(UserLockedOut), "Your account is temporarily locked due to too many failed login attempts");
     public static readonly Error EmailNotVerified = new(nameof(EmailNotVerified), "Email address is not verified");
+    public static readonly Error UserNotFound = new(nameof(UserNotFound), "User was not found");
     public static readonly Error InvalidExternalLogin = new(nameof(InvalidExternalLogin), "Invalid external login");
+    public static readonly Error BrandOwnerRequired = new(nameof(BrandOwnerRequired), "User must own a brand");
     public static readonly Error InvalidRefreshToken = new(nameof(InvalidRefreshToken), "Invalid refresh token");
     public static readonly Error InvalidEmailVerificationCode = new(
         nameof(InvalidEmailVerificationCode), "Invalid email verification code");

@@ -1,4 +1,3 @@
-using Handmade.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using ApplicationException = Handmade.Application.Common.Exceptions.ApplicationException;
@@ -27,17 +26,16 @@ public class PermissionAuthorizationPolicyProvider(IOptions<AuthorizationOptions
         var policies = policyName[PolicyPrefix.Length..].Split('#');
 
         if (policies.Length != 3
-            || !Enum.TryParse(policies[0], ignoreCase: false, out Permissions permission)
-            || !Enum.IsDefined(permission)
-            || !bool.TryParse(policies[1], out var isSuperAdminRequired)
-            || !bool.TryParse(policies[2], out var phoneVerifiedRequired))
+            || !bool.TryParse(policies[0], out var isSuperAdminRequired)
+            || !bool.TryParse(policies[1], out var phoneVerifiedRequired)
+            || !bool.TryParse(policies[2], out var brandOwnerRequired))
         {
             throw new ApplicationException($"Invalid authorization policy name: {policyName}");
         }
 
         return new AuthorizationPolicyBuilder()
             .RequireAuthenticatedUser()
-            .AddRequirements(new PermissionRequirement(permission, isSuperAdminRequired, phoneVerifiedRequired))
+            .AddRequirements(new PermissionRequirement(isSuperAdminRequired, phoneVerifiedRequired, brandOwnerRequired))
             .Build();
     }
 }

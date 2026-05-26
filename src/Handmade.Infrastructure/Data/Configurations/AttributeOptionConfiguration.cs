@@ -26,15 +26,15 @@ internal class AttributeOptionConfiguration : BaseAuditableEntityConfiguration<A
         builder.Property(x => x.Order)
             .HasDefaultValue(0);
 
-        builder.HasIndex(x => x.CategoryAttributeId);
+        builder.HasIndex(x => x.ProductAttributeId);
 
-        builder.HasIndex(x => new { x.CategoryAttributeId, x.NormalizedValue })
+        builder.HasIndex(x => new { x.ProductAttributeId, x.NormalizedValue })
             .IsUnique()
             .HasFilter("\"Deleted\" = false");
 
-        builder.HasOne(x => x.CategoryAttribute)
+        builder.HasOne(x => x.ProductAttribute)
             .WithMany(x => x.Options)
-            .HasForeignKey(x => x.CategoryAttributeId)
+            .HasForeignKey(x => x.ProductAttributeId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

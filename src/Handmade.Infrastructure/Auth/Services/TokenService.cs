@@ -14,7 +14,7 @@ public class TokenService(JwtOptions jwtOptions, TimeProvider timeProvider) : IT
     public (string jwtToken, DateTimeOffset expiresAt) CreateJwtToken(
         User user,
         Guid sessionId,
-        IEnumerable<Permissions>? permissions = null)
+        bool ownsBrand)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(jwtOptions.Secret);
         ArgumentException.ThrowIfNullOrWhiteSpace(jwtOptions.Issuer);
@@ -41,19 +41,11 @@ public class TokenService(JwtOptions jwtOptions, TimeProvider timeProvider) : IT
             new("email", user.Email),
             new(Claims.AccessLevel, ((int)user.AccessLevel).ToString()),
             new(Claims.SuperAdmin, ToFlag(user.AccessLevel == AccessLevel.SuperAdmin)),
+            new(Claims.BrandOwner, ToFlag(ownsBrand)),
             new(Claims.EmailVerified, ToFlag(user.EmailVerified)),
             new(Claims.PhoneVerified, ToFlag(user.PhoneNumberVerified)),
-            new(Claims.TokenVersion, user.TokenVersion.ToString()),
-            new(Claims.PermissionVersion, user.PermissionVersion.ToString())
+            new(Claims.TokenVersion, user.TokenVersion.ToString())
         };
-
-        if (permissions is not null)
-        {
-            claims.AddRange(permissions
-                .Where(permission => permission != Permissions.None)
-                .Distinct()
-                .Select(permission => new System.Security.Claims.Claim(Claims.Permissions, ((int)permission).ToString())));
-        }
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret));
         var signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);

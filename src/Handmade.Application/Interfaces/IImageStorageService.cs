@@ -4,6 +4,7 @@ public interface IImageStorageService
 {
     Task<ImageUploadResult> UploadAsync(ImageUploadRequest request, CancellationToken cancellationToken);
     Task DeleteAsync(string objectKey, CancellationToken cancellationToken);
+    string? GetPublicUrl(string objectKey);
 }
 
 public sealed record ImageUploadRequest(

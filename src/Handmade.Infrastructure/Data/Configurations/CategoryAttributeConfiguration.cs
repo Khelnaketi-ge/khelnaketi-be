@@ -15,21 +15,6 @@ internal class CategoryAttributeConfiguration : BaseAuditableEntityConfiguration
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Name)
-            .HasMaxLength(160)
-            .IsRequired();
-
-        builder.Property(x => x.NormalizedName)
-            .HasMaxLength(160)
-            .IsRequired();
-
-        builder.Property(x => x.Type)
-            .HasConversion<short>()
-            .IsRequired();
-
-        builder.Property(x => x.Unit)
-            .HasMaxLength(32);
-
         builder.Property(x => x.IsRequired)
             .HasDefaultValue(false);
 
@@ -41,7 +26,9 @@ internal class CategoryAttributeConfiguration : BaseAuditableEntityConfiguration
 
         builder.HasIndex(x => x.CategoryId);
 
-        builder.HasIndex(x => new { x.CategoryId, x.NormalizedName })
+        builder.HasIndex(x => x.ProductAttributeId);
+
+        builder.HasIndex(x => new { x.CategoryId, x.ProductAttributeId })
             .IsUnique()
             .HasFilter("\"Deleted\" = false");
 
@@ -49,5 +36,10 @@ internal class CategoryAttributeConfiguration : BaseAuditableEntityConfiguration
             .WithMany(x => x.CategoryAttributes)
             .HasForeignKey(x => x.CategoryId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.ProductAttribute)
+            .WithMany(x => x.CategoryAttributes)
+            .HasForeignKey(x => x.ProductAttributeId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -73,6 +73,20 @@ public class AuthService(
 
     public async Task<TokensModel> LoginAsync(string email, string password, CancellationToken cancellationToken)
     {
+        return await LoginAsync(email, password, requireBrandOwner: false, cancellationToken);
+    }
+
+    public async Task<TokensModel> PanelLoginAsync(string email, string password, CancellationToken cancellationToken)
+    {
+        return await LoginAsync(email, password, requireBrandOwner: true, cancellationToken);
+    }
+
+    private async Task<TokensModel> LoginAsync(
+        string email,
+        string password,
+        bool requireBrandOwner,
+        CancellationToken cancellationToken)
+    {
         var now = timeProvider.GetUtcNow();
         var normalizedEmail = NormalizeEmail(email);
 
@@ -111,6 +125,11 @@ public class AuthService(
         user.AccessFailedCount = 0;
         user.LockoutEnd = null;
 
+        if (requireBrandOwner)
+        {
+            await EnsureBrandOwnerAsync(user.Id, cancellationToken);
+        }
+
         return await authTokenIssuer.IssueTokensAsync(user, cancellationToken);
     }
 
@@ -124,7 +143,6 @@ public class AuthService(
         var userId = GetRequiredClaim<int>(jwtToken, Claims.Id, int.TryParse);
         var sessionId = GetRequiredClaim<Guid>(jwtToken, Claims.SessionId, Guid.TryParse);
         var tokenVersion = GetRequiredClaim<int>(jwtToken, Claims.TokenVersion, int.TryParse);
-        var permissionVersion = GetRequiredClaim<int>(jwtToken, Claims.PermissionVersion, int.TryParse);
 
         var now = timeProvider.GetUtcNow();
         var refreshTokenHash = tokenHasher.HashToken(refreshToken);
@@ -139,8 +157,7 @@ public class AuthService(
         if (user is null
             || user.IsBlocked
             || !user.EmailVerified
-            || user.TokenVersion != tokenVersion
-            || user.PermissionVersion != permissionVersion)
+            || user.TokenVersion != tokenVersion)
         {
             throw new UnauthorizedException(UnauthorizedErrors.InvalidRefreshToken);
         }
@@ -211,33 +228,14 @@ public class AuthService(
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        var (newAccessToken, newAccessTokenExpiresAt) = tokenService.CreateJwtToken(user, session.Id);
+        var ownsBrand = await context.Brands.AnyAsync(x => x.OwnerUserId == user.Id, cancellationToken);
+        var (newAccessToken, newAccessTokenExpiresAt) = tokenService.CreateJwtToken(user, session.Id, ownsBrand);
 
         return new TokensModel(
             newAccessToken,
             newAccessTokenExpiresAt,
             newRefreshToken,
             newRefreshTokenExpiresAt);
-    }
-
-    public async Task LogoutAsync(int userId, Guid sessionId, CancellationToken cancellationToken)
-    {
-        var now = timeProvider.GetUtcNow();
-
-        var session = await context.UserSessions
-            .Include(x => x.RefreshTokens)
-            .FirstOrDefaultAsync(
-                x => x.Id == sessionId && x.UserId == userId,
-                cancellationToken);
-
-        if (session is null)
-        {
-            return;
-        }
-
-        RevokeSession(session, now, "User logout");
-
-        await context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task RequestPasswordResetAsync(string email, CancellationToken cancellationToken)
@@ -506,6 +504,16 @@ public class AuthService(
     }
 
     private static string NormalizeEmail(string email) => email.Trim().ToUpperInvariant();
+
+    private async Task EnsureBrandOwnerAsync(int userId, CancellationToken cancellationToken)
+    {
+        var ownsBrand = await context.Brands.AnyAsync(x => x.OwnerUserId == userId, cancellationToken);
+
+        if (!ownsBrand)
+        {
+            throw new UnauthorizedException(UnauthorizedErrors.BrandOwnerRequired);
+        }
+    }
 
     private async Task SendEmailVerificationCodeEmailAsync(
         User user,

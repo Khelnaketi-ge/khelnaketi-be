@@ -94,6 +94,12 @@ public sealed class ImageStorageService(
         }
     }
 
+    public string? GetPublicUrl(string objectKey)
+    {
+        EnsureConfigured();
+        return BuildPublicUrl(NormalizeObjectKey(objectKey));
+    }
+
     private void EnsureConfigured()
     {
         if (string.IsNullOrWhiteSpace(storage.StorageBaseUrl)

@@ -1,33 +1,38 @@
 using Microsoft.AspNetCore.Authorization;
+using Handmade.Application.Interfaces;
 using Handmade.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace Handmade.Infrastructure.Auth.Policies;
 
-public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionRequirement>
+public class PermissionAuthorizationHandler(IApplicationDbContext dbContext) : AuthorizationHandler<PermissionRequirement>
 {
-    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
+    protected override async Task HandleRequirementAsync(
+        AuthorizationHandlerContext authorizationContext,
+        PermissionRequirement requirement)
     {
-        var accessLevel = GetAccessLevel(context);
+        var accessLevel = GetAccessLevel(authorizationContext);
         var isSuperAdmin = accessLevel == AccessLevel.SuperAdmin;
 
         if (requirement.SuperAdminRequired && !isSuperAdmin)
         {
-            context.Fail(new AuthorizationFailureReason(this, "SaRequired#User must be super admin"));
-            return Task.CompletedTask;
+            authorizationContext.Fail(new AuthorizationFailureReason(this, "SaRequired#User must be super admin"));
+            return;
         }
 
-        if (requirement.PhoneVerifiedRequired && !IsPhoneVerified(context))
+        if (requirement.PhoneVerifiedRequired && !IsPhoneVerified(authorizationContext))
         {
-            context.Fail(new AuthorizationFailureReason(this, "PvRequired#User must verify phone number"));
-            return Task.CompletedTask;
+            authorizationContext.Fail(new AuthorizationFailureReason(this, "PvRequired#User must verify phone number"));
+            return;
         }
 
-        if (isSuperAdmin || requirement.Permission == Permissions.None || HasPermission(context, requirement.Permission))
+        if (requirement.BrandOwnerRequired && !isSuperAdmin && !await IsBrandOwnerAsync(authorizationContext))
         {
-            context.Succeed(requirement);
+            authorizationContext.Fail(new AuthorizationFailureReason(this, "BoRequired#User must own a brand"));
+            return;
         }
-        
-        return Task.CompletedTask;
+
+        authorizationContext.Succeed(requirement);
     }
 
     private static AccessLevel GetAccessLevel(AuthorizationHandlerContext context)
@@ -47,12 +52,7 @@ public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionReq
         }
 
         var superAdminClaim = context.User.Claims.FirstOrDefault(x => x.Type == Claims.SuperAdmin);
-        if (IsTrue(superAdminClaim?.Value))
-        {
-            return AccessLevel.SuperAdmin;
-        }
-
-        return AccessLevel.User;
+        return IsTrue(superAdminClaim?.Value) ? AccessLevel.SuperAdmin : AccessLevel.User;
     }
 
     private static bool IsPhoneVerified(AuthorizationHandlerContext context)
@@ -61,14 +61,12 @@ public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionReq
         return IsTrue(phoneVerifiedClaim?.Value);
     }
 
-    private static bool HasPermission(AuthorizationHandlerContext context, Permissions permission)
+    private async Task<bool> IsBrandOwnerAsync(AuthorizationHandlerContext context)
     {
-        var permissionValue = ((int)permission).ToString();
-        var permissionName = permission.ToString();
+        var userIdClaim = context.User.Claims.FirstOrDefault(x => x.Type == Claims.Id);
 
-        return context.User.Claims
-            .Where(x => x.Type == Claims.Permissions)
-            .Any(x => x.Value == permissionValue || x.Value == permissionName);
+        return int.TryParse(userIdClaim?.Value, out var userId)
+               && await dbContext.Brands.AnyAsync(x => x.OwnerUserId == userId);
     }
 
     private static bool IsTrue(string? value)

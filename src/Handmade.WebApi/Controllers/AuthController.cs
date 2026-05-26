@@ -1,6 +1,5 @@
 using Asp.Versioning;
 using Handmade.Application.Features.Auth.Commands.Login;
-using Handmade.Application.Features.Auth.Commands.Logout;
 using Handmade.Application.Features.Auth.Commands.Refresh;
 using Handmade.Application.Features.Auth.Commands.Register;
 using Handmade.Application.Features.Auth.Commands.ResendVerificationCode;
@@ -11,7 +10,6 @@ using Handmade.WebApi.Infrastructure;
 using Handmade.WebApi.Services;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -75,14 +73,6 @@ public class AuthController(
         return NoContent();
     }
 
-    [Authorize]
-    [HttpPost("logout")]
-    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
-    {
-        await Sender.Send(new LogoutCommand(), cancellationToken);
-        return NoContent();
-    }
-
     [HttpGet("external/google")]
     public IActionResult Google()
     {
@@ -95,7 +85,7 @@ public class AuthController(
     [HttpGet("external/google/callback")]
     public async Task<IActionResult> GoogleCallback()
     {
-        var tokens = await googleAuthService.HandleCallbackAsync(HttpContext.RequestAborted);
+        var tokens = await googleAuthService.HandleCallbackAsync(requireBrandOwner: false, HttpContext.RequestAborted);
 
         if (tokens is null)
         {

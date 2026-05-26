@@ -1,6 +1,7 @@
 using Handmade.Application.Common.Models.Auth;
 using Handmade.Application.Interfaces;
 using Handmade.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Handmade.Infrastructure.Auth;
 
@@ -36,7 +37,8 @@ public sealed class AuthTokenIssuer(
 
         await context.SaveChangesAsync(cancellationToken);
 
-        var (accessToken, accessTokenExpiresAt) = tokenService.CreateJwtToken(user, session.Id);
+        var ownsBrand = await context.Brands.AnyAsync(x => x.OwnerUserId == user.Id, cancellationToken);
+        var (accessToken, accessTokenExpiresAt) = tokenService.CreateJwtToken(user, session.Id, ownsBrand);
 
         return new TokensModel(
             accessToken,
