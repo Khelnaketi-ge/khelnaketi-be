@@ -4,6 +4,8 @@ using Handmade.Application.Features.Products.Models;
 using Handmade.Application.Interfaces;
 using Handmade.Domain.Entities;
 using Handmade.Domain.Enums;
+using Mapster;
+using MapsterMapper;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +32,8 @@ public sealed record ProductAttributeValueInput(
 public sealed class CreateProductCommandHandler(
     IApplicationDbContext context,
     ICurrentUser currentUser,
-    IImageStorageService imageStorage) : IRequestHandler<CreateProductCommand, ProductDto>
+    IImageStorageService imageStorage,
+    IMapper mapper) : IRequestHandler<CreateProductCommand, ProductDto>
 {
     private const string ProductImageFolder = "product-images";
 
@@ -133,7 +136,11 @@ public sealed class CreateProductCommandHandler(
             context.Products.Add(product);
             await context.SaveChangesAsync(cancellationToken);
 
-            return ProductMappings.ToDto(product, imageStorage);
+            using var scope = new MapContextScope();
+
+            scope.Context.Parameters[nameof(IImageStorageService)] = imageStorage;
+
+            return mapper.Map<ProductDto>(product);
         }
         catch
         {
@@ -213,19 +220,15 @@ public sealed class CreateProductCommandHandler(
             case AttributeType.Text:
                 return value?.Trim() ?? string.Empty;
             case AttributeType.Integer:
-                if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var integerValue))
-                {
-                    throw new ValidationException($"attributes.{attribute.Id}", $"{attribute.Name} must be an integer");
-                }
+                return !int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var integerValue) 
+                    ? throw new ValidationException($"attributes.{attribute.Id}", $"{attribute.Name} must be an integer") 
+                    : integerValue.ToString(CultureInfo.InvariantCulture);
 
-                return integerValue.ToString(CultureInfo.InvariantCulture);
             case AttributeType.Boolean:
-                if (!bool.TryParse(value, out var boolValue))
-                {
-                    throw new ValidationException($"attributes.{attribute.Id}", $"{attribute.Name} must be true or false");
-                }
+                return !bool.TryParse(value, out var boolValue) 
+                    ? throw new ValidationException($"attributes.{attribute.Id}", $"{attribute.Name} must be true or false") 
+                    : boolValue.ToString();
 
-                return boolValue.ToString();
             case AttributeType.Select:
                 return optionId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
             default:

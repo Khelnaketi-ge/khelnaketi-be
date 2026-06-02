@@ -44,6 +44,11 @@ public sealed class LinkCategoryAttributeCommandHandler(IApplicationDbContext co
             throw new ValidationException(nameof(request.AttributeId), "Attribute was not found");
         }
 
+        if (attribute.IsDisabled)
+        {
+            throw new ValidationException(nameof(request.AttributeId), "Disabled attributes cannot be linked");
+        }
+
         var alreadyLinked = await context.CategoryAttributes.AnyAsync(
             x => x.CategoryId == request.CategoryId && x.ProductAttributeId == request.AttributeId,
             cancellationToken);

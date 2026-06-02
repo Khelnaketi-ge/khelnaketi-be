@@ -13,5 +13,6 @@ public class Category : BaseAuditableEntity<int>, INormalizedNameEntity
 
     public ICollection<Category> Children { get; set; } = [];
     public ICollection<CategoryAttribute> CategoryAttributes { get; set; } = [];
+    public ICollection<HomeCategory> HomeCategories { get; set; } = [];
     public ICollection<Product> Products { get; set; } = [];
 }

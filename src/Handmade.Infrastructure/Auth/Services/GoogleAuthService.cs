@@ -217,6 +217,14 @@ public sealed class GoogleAuthService(
 
     private async Task EnsureBrandOwnerAsync(int userId, CancellationToken cancellationToken)
     {
+        var user = await context.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken) 
+                   ?? throw new UnauthorizedException(UnauthorizedErrors.InvalidCreds);;
+        
+        if (user.AccessLevel == AccessLevel.SuperAdmin)
+        {
+            return;
+        }
+        
         var ownsBrand = await context.Brands.AnyAsync(x => x.OwnerUserId == userId, cancellationToken);
 
         if (!ownsBrand)

@@ -1,8 +1,10 @@
 using Asp.Versioning;
 using Handmade.Application.Features.Attributes.Commands.CreateAttribute;
 using Handmade.Application.Features.Attributes.Commands.CreateAttributeOption;
+using Handmade.Application.Features.Attributes.Commands.DeleteAttribute;
 using Handmade.Application.Features.Attributes.Commands.DeleteAttributeOption;
 using Handmade.Application.Features.Attributes.Commands.ReorderAttributeOptions;
+using Handmade.Application.Features.Attributes.Commands.UpdateAttributeStatus;
 using Handmade.Application.Features.Attributes.Commands.UpdateAttributeOption;
 using Handmade.Application.Features.Attributes.Queries.GetAttributes;
 using Handmade.Infrastructure.Auth.Policies;
@@ -30,6 +32,23 @@ public class AttributesController(ISender sender) : ApiController(sender)
     {
         var result = await Sender.Send(command, cancellationToken);
         return Created($"/api/v1/attributes/{result.Id}", result);
+    }
+
+    [HttpPatch("status")]
+    public async Task<IActionResult> UpdateStatus(
+        [FromBody] UpdateAttributeStatusCommand command,
+        CancellationToken cancellationToken)
+    {
+        return Ok(await Sender.Send(command, cancellationToken));
+    }
+
+    [HttpDelete]
+    public async Task<IActionResult> Delete(
+        [FromBody] DeleteAttributeCommand command,
+        CancellationToken cancellationToken)
+    {
+        await Sender.Send(command, cancellationToken);
+        return NoContent();
     }
 
     [HttpPost("options")]

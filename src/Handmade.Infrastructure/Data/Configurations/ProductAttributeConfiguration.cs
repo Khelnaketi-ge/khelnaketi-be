@@ -30,7 +30,11 @@ internal class ProductAttributeConfiguration : BaseAuditableEntityConfiguration<
         builder.Property(x => x.Unit)
             .HasMaxLength(32);
 
+        builder.Property(x => x.IsDisabled)
+            .HasDefaultValue(false);
+
         builder.HasIndex(x => x.Type);
+        builder.HasIndex(x => x.IsDisabled);
 
         builder.HasIndex(x => x.NormalizedName)
             .IsUnique()

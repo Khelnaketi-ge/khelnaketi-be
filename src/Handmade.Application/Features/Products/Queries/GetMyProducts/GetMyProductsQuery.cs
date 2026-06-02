@@ -2,19 +2,22 @@ using Handmade.Application.Common.Exceptions;
 using Handmade.Application.Features.Products.Models;
 using Handmade.Application.Interfaces;
 using Handmade.Domain.Enums;
+using Mapster;
+using MapsterMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Handmade.Application.Features.Products.Queries.GetMyProducts;
 
-public sealed record GetMyProductsQuery : IRequest<IReadOnlyCollection<ProductDto>>;
+public sealed record GetMyProductsQuery : IRequest<List<ProductDto>>;
 
 public sealed class GetMyProductsQueryHandler(
     IApplicationDbContext context,
     ICurrentUser currentUser,
-    IImageStorageService imageStorage) : IRequestHandler<GetMyProductsQuery, IReadOnlyCollection<ProductDto>>
+    IImageStorageService imageStorage,
+    IMapper mapper) : IRequestHandler<GetMyProductsQuery, List<ProductDto>>
 {
-    public async Task<IReadOnlyCollection<ProductDto>> Handle(
+    public async Task<List<ProductDto>> Handle(
         GetMyProductsQuery request,
         CancellationToken cancellationToken)
     {
@@ -42,7 +45,11 @@ public sealed class GetMyProductsQueryHandler(
             .Where(x => isSuperAdmin || x.Brand.OwnerUserId == currentUser.Id.Value)
             .OrderByDescending(x => x.Created)
             .ToListAsync(cancellationToken);
+        
+        using var scope = new MapContextScope();
 
-        return products.Select(product => ProductMappings.ToDto(product, imageStorage)).ToList();
+        scope.Context.Parameters[nameof(IImageStorageService)] = imageStorage;
+
+        return mapper.Map<List<ProductDto>>(products);
     }
 }

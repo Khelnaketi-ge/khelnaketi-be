@@ -10,6 +10,7 @@ public class ProductAttribute : BaseAuditableEntity<int>, INormalizedNameEntity
 
     public AttributeType Type { get; set; }
     public string? Unit { get; set; }
+    public bool IsDisabled { get; set; }
 
     public ICollection<AttributeOption> Options { get; set; } = [];
     public ICollection<CategoryAttribute> CategoryAttributes { get; set; } = [];

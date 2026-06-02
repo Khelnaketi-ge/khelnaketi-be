@@ -7,6 +7,7 @@ public sealed record AttributeDto(
     string Name,
     AttributeType Type,
     string? Unit,
+    bool IsDisabled,
     IReadOnlyCollection<AttributeOptionDto> Options);
 
 public sealed record AttributeOptionDto(

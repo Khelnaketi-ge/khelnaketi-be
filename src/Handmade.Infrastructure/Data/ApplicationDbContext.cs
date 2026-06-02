@@ -19,6 +19,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<BrandPhoneNumber> BrandPhoneNumbers => Set<BrandPhoneNumber>();
     public DbSet<ImageAsset> ImageAssets => Set<ImageAsset>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<HomeCategory> HomeCategories => Set<HomeCategory>();
     public DbSet<ProductAttribute> ProductAttributes => Set<ProductAttribute>();
     public DbSet<AttributeOption> AttributeOptions => Set<AttributeOption>();
     public DbSet<CategoryAttribute> CategoryAttributes => Set<CategoryAttribute>();

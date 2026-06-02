@@ -10,6 +10,7 @@ internal static class AttributeMappings
             attribute.Name,
             attribute.Type,
             attribute.Unit,
+            attribute.IsDisabled,
             attribute.Options
                 .OrderBy(x => x.Order)
                 .ThenBy(x => x.Value)

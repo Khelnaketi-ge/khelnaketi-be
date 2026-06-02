@@ -1,34 +1,75 @@
+using Handmade.Application.Interfaces;
+using Handmade.Domain.Entities;
 using Handmade.Domain.Enums;
+using Mapster;
 
 namespace Handmade.Application.Features.Products.Models;
 
-public sealed record ProductDto(
-    int Id,
-    int BrandId,
-    int CategoryId,
-    string CategoryName,
-    string Name,
-    string? Description,
-    string? Sku,
-    decimal? Price,
-    bool IsInStock,
-    ProductStatus Status,
-    DateTimeOffset Created,
-    IReadOnlyCollection<ProductImageDto> Images,
-    IReadOnlyCollection<ProductAttributeValueDto> AttributeValues);
+public sealed class ProductDto : IMapFrom<Product>
+{
+    public int Id { get; set; }
+    public int BrandId { get; set; }
+    public int CategoryId { get; set; }
+    public string CategoryName { get; set; } = null!;
+    public string Name { get; set; } = null!;
+    public string? Description { get; set; }
+    public string? Sku { get; set; }
+    public decimal? Price { get; set; }
+    public bool IsInStock { get; set; }
+    public ProductStatus Status { get; set; }
+    public DateTimeOffset Created { get; set; }
 
-public sealed record ProductImageDto(
-    int Id,
-    Guid ImageId,
-    string? ImageUrl,
-    int Order,
-    bool IsPrimary);
+    public IReadOnlyCollection<ProductImageDto> Images { get; set; } = [];
+    public IReadOnlyCollection<ProductAttributeValueDto> AttributeValues { get; set; } = [];
 
-public sealed record ProductAttributeValueDto(
-    int Id,
-    int AttributeId,
-    string AttributeName,
-    AttributeType Type,
-    string Value,
-    int? OptionId,
-    string? OptionValue);
+    public void ConfigureMapping(TypeAdapterConfig config)
+    {
+        config.NewConfig<Product, ProductDto>()
+            .Map(dest => dest.CategoryName, src => src.Category.Name)
+            .Map(dest => dest.Images, src => src.Images
+                .OrderBy(x => x.Order)
+                .ThenBy(x => x.Id))
+            .Map(dest => dest.AttributeValues, src => src.AttributeValues
+                .OrderBy(x => x.ProductAttribute.Name));
+    }
+}
+
+public sealed class ProductImageDto : IMapFrom<ProductImage>
+{
+    public int Id { get; set; }
+    public Guid ImageId { get; set; }
+    public string? ImageUrl { get; set; }
+    public int Order { get; set; }
+    public bool IsPrimary { get; set; }
+
+    public void ConfigureMapping(TypeAdapterConfig config)
+    {
+        config.NewConfig<ProductImage, ProductImageDto>()
+            .Map(dest => dest.ImageUrl, src =>
+                ((IImageStorageService)MapContext.Current!.Parameters[nameof(IImageStorageService)])
+                    .GetPublicUrl(src.Image.ObjectKey));
+    }
+}
+
+public sealed class ProductAttributeValueDto : IMapFrom<ProductAttributeValue>
+{
+    public int Id { get; set; }
+    public int AttributeId { get; set; }
+    public string AttributeName { get; set; } = null!;
+    public AttributeType Type { get; set; }
+    public string Value { get; set; } = null!;
+    public int? OptionId { get; set; }
+    public string? OptionValue { get; set; }
+
+    public void ConfigureMapping(TypeAdapterConfig config)
+    {
+        config.NewConfig<ProductAttributeValue, ProductAttributeValueDto>()
+            .Map(dest => dest.AttributeId, src => src.ProductAttributeId)
+            .Map(dest => dest.AttributeName, src => src.ProductAttribute.Name)
+            .Map(dest => dest.Type, src => src.ProductAttribute.Type)
+            .Map(dest => dest.OptionId, src => src.AttributeOptionId)
+            .Map(dest => dest.OptionValue, src => src.AttributeOption != null
+                ? src.AttributeOption.Value
+                : null);
+    }
+}

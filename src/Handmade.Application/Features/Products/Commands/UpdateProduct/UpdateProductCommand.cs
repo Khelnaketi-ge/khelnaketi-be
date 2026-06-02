@@ -5,6 +5,8 @@ using Handmade.Application.Features.Products.Models;
 using Handmade.Application.Interfaces;
 using Handmade.Domain.Entities;
 using Handmade.Domain.Enums;
+using Mapster;
+using MapsterMapper;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +31,8 @@ public sealed record UpdateProductCommand(
 public sealed class UpdateProductCommandHandler(
     IApplicationDbContext context,
     ICurrentUser currentUser,
-    IImageStorageService imageStorage) : IRequestHandler<UpdateProductCommand, ProductDto>
+    IImageStorageService imageStorage,
+    IMapper mapper) : IRequestHandler<UpdateProductCommand, ProductDto>
 {
     private const string ProductImageFolder = "product-images";
 
@@ -114,13 +117,11 @@ public sealed class UpdateProductCommandHandler(
             var keptImageIds = (request.ExistingImageIds ?? [])
                 .ToHashSet();
 
-            foreach (var productImage in product.Images.ToList())
+            foreach (var productImage in product.Images.ToList()
+                         .Where(productImage => !keptImageIds.Contains(productImage.Id)))
             {
-                if (!keptImageIds.Contains(productImage.Id))
-                {
-                    context.ProductImages.Remove(productImage);
-                    product.Images.Remove(productImage);
-                }
+                context.ProductImages.Remove(productImage);
+                product.Images.Remove(productImage);
             }
 
             var newImages = (request.Images ?? []).Where(x => x.Length > 0).ToList();
@@ -132,9 +133,8 @@ public sealed class UpdateProductCommandHandler(
                 primaryImageIndex = 0;
             }
 
-            for (var index = 0; index < newImages.Count; index++)
+            foreach (var file in newImages)
             {
-                var file = newImages[index];
                 await using var imageStream = file.OpenReadStream();
                 var uploadedImage = await imageStorage.UploadAsync(
                     new ImageUploadRequest(
@@ -196,7 +196,11 @@ public sealed class UpdateProductCommandHandler(
 
             await transaction.CommitAsync(cancellationToken);
 
-            return ProductMappings.ToDto(product, imageStorage);
+            using var scope = new MapContextScope();
+
+            scope.Context.Parameters[nameof(IImageStorageService)] = imageStorage;
+
+            return mapper.Map<ProductDto>(product);
         }
         catch
         {

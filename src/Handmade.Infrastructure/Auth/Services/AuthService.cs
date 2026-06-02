@@ -73,18 +73,18 @@ public class AuthService(
 
     public async Task<TokensModel> LoginAsync(string email, string password, CancellationToken cancellationToken)
     {
-        return await LoginAsync(email, password, requireBrandOwner: false, cancellationToken);
+        return await LoginAsync(email, password, requirePanelAccess: false, cancellationToken);
     }
 
     public async Task<TokensModel> PanelLoginAsync(string email, string password, CancellationToken cancellationToken)
     {
-        return await LoginAsync(email, password, requireBrandOwner: true, cancellationToken);
+        return await LoginAsync(email, password, requirePanelAccess: true, cancellationToken);
     }
 
     private async Task<TokensModel> LoginAsync(
         string email,
         string password,
-        bool requireBrandOwner,
+        bool requirePanelAccess,
         CancellationToken cancellationToken)
     {
         var now = timeProvider.GetUtcNow();
@@ -125,14 +125,30 @@ public class AuthService(
         user.AccessFailedCount = 0;
         user.LockoutEnd = null;
 
-        if (requireBrandOwner)
+        if (requirePanelAccess)
         {
-            await EnsureBrandOwnerAsync(user.Id, cancellationToken);
+            await EnsurePanelAccessAsync(user, cancellationToken);
         }
 
         return await authTokenIssuer.IssueTokensAsync(user, cancellationToken);
     }
 
+    private async Task EnsurePanelAccessAsync(User user, CancellationToken cancellationToken)
+    {
+        if (user.AccessLevel == AccessLevel.SuperAdmin)
+        {
+            return;
+        }
+
+        var ownsBrand = await context.Brands
+            .AnyAsync(x => x.OwnerUserId == user.Id, cancellationToken);
+
+        if (!ownsBrand)
+        {
+            throw new UnauthorizedException(UnauthorizedErrors.BrandOwnerRequired);
+        }
+    }
+    
     public async Task<TokensModel> RefreshAsync(string accessToken, string refreshToken, CancellationToken cancellationToken)
     {
         if (!tokenService.ValidateToken(accessToken, out var jwtToken, validateLifetime: false))
@@ -504,16 +520,6 @@ public class AuthService(
     }
 
     private static string NormalizeEmail(string email) => email.Trim().ToUpperInvariant();
-
-    private async Task EnsureBrandOwnerAsync(int userId, CancellationToken cancellationToken)
-    {
-        var ownsBrand = await context.Brands.AnyAsync(x => x.OwnerUserId == userId, cancellationToken);
-
-        if (!ownsBrand)
-        {
-            throw new UnauthorizedException(UnauthorizedErrors.BrandOwnerRequired);
-        }
-    }
 
     private async Task SendEmailVerificationCodeEmailAsync(
         User user,

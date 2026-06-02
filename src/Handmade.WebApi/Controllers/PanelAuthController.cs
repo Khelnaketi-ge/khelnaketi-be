@@ -24,7 +24,8 @@ public class PanelAuthController(
 
     [HttpPost("login")]
     [EnableRateLimiting(RateLimiterPolicies.AuthSensitive)]
-    public async Task<IActionResult> Login([FromBody] PanelLoginCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> Login(
+        [FromBody] PanelLoginCommand command, CancellationToken cancellationToken)
     {
         return Ok(await Sender.Send(command, cancellationToken));
     }

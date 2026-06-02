@@ -3,8 +3,8 @@ using FluentValidation;
 using Handmade.Application.Common.Behaviours;
 using Mapster;
 using Mapster.Utils;
+using MapsterMapper;
 using MediatR;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -17,6 +17,9 @@ public static class DependencyInjection
         // Mapster
         TypeAdapterConfig.GlobalSettings
             .ScanInheritedTypes(Assembly.GetExecutingAssembly());
+        
+        builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
+        builder.Services.AddScoped<IMapper, ServiceMapper>();
 
         builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 

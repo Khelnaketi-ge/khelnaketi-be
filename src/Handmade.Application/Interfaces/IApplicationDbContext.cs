@@ -17,6 +17,7 @@ public interface IApplicationDbContext : IDisposable
     DbSet<BrandPhoneNumber> BrandPhoneNumbers { get; }
     DbSet<ImageAsset> ImageAssets { get; }
     DbSet<Category> Categories { get; }
+    DbSet<HomeCategory> HomeCategories { get; }
     DbSet<ProductAttribute> ProductAttributes { get; }
     DbSet<AttributeOption> AttributeOptions { get; }
     DbSet<CategoryAttribute> CategoryAttributes { get; }
