@@ -7,6 +7,8 @@ public class Brand : BaseAuditableEntity<int>, INormalizedNameEntity
 {
     public required string Name { get; set; }
     public string NormalizedName { get; set; } = string.Empty;
+    public string Slug { get; set; } = string.Empty;
+    public string? Description { get; set; }
     
     public string? LegalName { get; set; }
     public Guid? LogoImageId { get; set; }

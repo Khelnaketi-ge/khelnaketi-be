@@ -1,10 +1,11 @@
 using Handmade.Application.Common.Exceptions;
+using Handmade.Application.Common.Slugs;
 using Handmade.Application.Features.Brands.Commands.CreateBrand.Models;
 using Handmade.Application.Interfaces;
-using Handmade.Domain.Common;
 using Handmade.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace Handmade.Application.Features.Brands.Commands.CreateBrand;
 
@@ -12,6 +13,7 @@ public sealed record CreateBrandCommand(
     string Name,
     int OwnerUserId,
     string? LegalName,
+    string? Description,
     IFormFile? Logo) : IRequest<CreateBrandDto>;
 
 public sealed class CreateBrandCommandHandler(
@@ -65,6 +67,12 @@ public sealed class CreateBrandCommandHandler(
             {
                 Name = request.Name.Trim(),
                 LegalName = NormalizeOptional(request.LegalName),
+                Slug = await SlugGenerator.GenerateUniqueAsync(
+                    context.Brands.Select(x => x.Slug),
+                    request.Name,
+                    220,
+                    cancellationToken),
+                Description = NormalizeOptional(request.Description),
                 LogoImageId = logoImage?.Id,
                 OwnerUserId = request.OwnerUserId
             };

@@ -1,14 +1,20 @@
 using Handmade.Application.Common.Exceptions;
+using Handmade.Application.Common.Slugs;
 using Handmade.Application.Features.Brands.Commands.UpdateBrandContacts;
 using Handmade.Application.Features.Brands.Queries.GetMyBrand;
 using Handmade.Application.Interfaces;
+using Handmade.Domain.Entities;
 using Handmade.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Handmade.Application.Features.Brands.Commands.UpdateBrandDetails;
 
-public sealed record UpdateBrandDetailsCommand(int BrandId, string Name, string? LegalName) : IRequest<BrandOverviewDto>;
+public sealed record UpdateBrandDetailsCommand(
+    int BrandId,
+    string Name,
+    string? LegalName,
+    string? Description) : IRequest<BrandOverviewDto>;
 
 public sealed class UpdateBrandDetailsCommandHandler(
     IApplicationDbContext context,
@@ -43,6 +49,14 @@ public sealed class UpdateBrandDetailsCommandHandler(
 
         brand.Name = request.Name.Trim();
         brand.LegalName = string.IsNullOrWhiteSpace(request.LegalName) ? null : request.LegalName.Trim();
+        brand.Slug = await SlugGenerator.GenerateUniqueAsync(
+            context.Brands
+                .Where(x => x.Id != brand.Id)
+                .Select(x => x.Slug),
+            request.Name,
+            220,
+            cancellationToken);
+        brand.Description = NormalizeOptional(request.Description);
 
         await context.SaveChangesAsync(cancellationToken);
 
@@ -54,6 +68,8 @@ public sealed class UpdateBrandDetailsCommandHandler(
             brand.Created,
             brand.LogoImageId,
             brand.LogoImage is null ? null : imageStorage.GetPublicUrl(brand.LogoImage.ObjectKey),
+            brand.Slug,
+            brand.Description,
             new BrandContactsDto(
                 brand.PhoneNumbers.Select(x => new BrandPhoneNumberDto(x.Id, x.PhoneNumber, x.Label, x.IsPrimary, x.IsActive)).ToList(),
                 brand.EmailAddresses.Select(x => new BrandEmailAddressDto(x.Id, x.Email, x.Label, x.IsPrimary, x.IsActive)).ToList(),
@@ -68,4 +84,7 @@ public sealed class UpdateBrandDetailsCommandHandler(
                     x.IsPrimary,
                     x.IsActive)).ToList()));
     }
+
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

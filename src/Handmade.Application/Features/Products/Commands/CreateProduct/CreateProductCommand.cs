@@ -1,5 +1,7 @@
 using System.Globalization;
 using Handmade.Application.Common.Exceptions;
+using Handmade.Application.Common.Localization;
+using Handmade.Application.Common.Slugs;
 using Handmade.Application.Features.Products.Models;
 using Handmade.Application.Interfaces;
 using Handmade.Domain.Entities;
@@ -13,14 +15,14 @@ using Microsoft.EntityFrameworkCore;
 namespace Handmade.Application.Features.Products.Commands.CreateProduct;
 
 public sealed record CreateProductCommand(
+    int? BrandId,
     int CategoryId,
-    string Name,
-    string? Description,
     string? Sku,
     decimal? Price,
     bool IsInStock,
     ProductStatus Status,
     IReadOnlyCollection<ProductAttributeValueInput>? AttributeValues,
+    IReadOnlyCollection<ProductTranslationInput> Translations,
     int? PrimaryImageIndex,
     IReadOnlyCollection<IFormFile>? Images) : IRequest<ProductDto>;
 
@@ -44,8 +46,15 @@ public sealed class CreateProductCommandHandler(
             throw new UnauthorizedException(UnauthorizedErrors.InvalidCreds);
         }
 
-        var brand = await context.Brands
-            .SingleOrDefaultAsync(x => x.OwnerUserId == currentUser.Id.Value, cancellationToken);
+        var currentUserAccessLevel = await context.Users
+            .Where(x => x.Id == currentUser.Id.Value)
+            .Select(x => x.AccessLevel)
+            .SingleOrDefaultAsync(cancellationToken);
+        var isSuperAdmin = currentUserAccessLevel == AccessLevel.SuperAdmin;
+
+        var brand = request.BrandId.HasValue && isSuperAdmin
+            ? await context.Brands.SingleOrDefaultAsync(x => x.Id == request.BrandId.Value, cancellationToken)
+            : await context.Brands.SingleOrDefaultAsync(x => x.OwnerUserId == currentUser.Id.Value, cancellationToken);
 
         if (brand is null)
         {
@@ -54,6 +63,9 @@ public sealed class CreateProductCommandHandler(
 
         var category = await context.Categories
             .Include(x => x.Children)
+            .Include(x => x.CategoryAttributes)
+                .ThenInclude(x => x.ProductAttribute)
+                    .ThenInclude(x => x.Translations)
             .Include(x => x.CategoryAttributes)
                 .ThenInclude(x => x.ProductAttribute)
                     .ThenInclude(x => x.Options)
@@ -77,10 +89,9 @@ public sealed class CreateProductCommandHandler(
             var product = new Product
             {
                 BrandId = brand.Id,
+                Brand = brand,
                 CategoryId = category.Id,
                 Category = category,
-                Name = request.Name.Trim(),
-                Description = NormalizeOptional(request.Description),
                 Sku = NormalizeOptional(request.Sku),
                 Price = request.Price,
                 IsInStock = request.IsInStock,
@@ -136,6 +147,21 @@ public sealed class CreateProductCommandHandler(
             context.Products.Add(product);
             await context.SaveChangesAsync(cancellationToken);
 
+            foreach (var input in request.Translations)
+            {
+                product.Translations.Add(new ProductTranslation
+                {
+                    ProductId = product.Id,
+                    LanguageCode = LanguageCodes.Normalize(input.LanguageCode),
+                    Title = input.Title.Trim(),
+                    Slug = SlugGenerator.GenerateForEntity(input.Title, "p", product.Id, 220),
+                    ShortDescription = NormalizeOptional(input.ShortDescription),
+                    Description = NormalizeOptional(input.Description)
+                });
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+
             using var scope = new MapContextScope();
 
             scope.Context.Parameters[nameof(IImageStorageService)] = imageStorage;
@@ -174,7 +200,7 @@ public sealed class CreateProductCommandHandler(
             {
                 throw new ValidationException(
                     $"attributes.{attribute.Id}",
-                    $"{attribute.Name} is required");
+                    $"{GetAttributeName(attribute)} is required");
             }
 
             if (string.IsNullOrWhiteSpace(value) && optionId is null)
@@ -202,12 +228,12 @@ public sealed class CreateProductCommandHandler(
 
         if (optionId is null)
         {
-            throw new ValidationException($"attributes.{attribute.Id}", $"{attribute.Name} option is required");
+            throw new ValidationException($"attributes.{attribute.Id}", $"{GetAttributeName(attribute)} option is required");
         }
 
         if (attribute.Options.All(x => x.Id != optionId.Value))
         {
-            throw new ValidationException($"attributes.{attribute.Id}", $"{attribute.Name} option is invalid");
+            throw new ValidationException($"attributes.{attribute.Id}", $"{GetAttributeName(attribute)} option is invalid");
         }
 
         return optionId;
@@ -221,20 +247,26 @@ public sealed class CreateProductCommandHandler(
                 return value?.Trim() ?? string.Empty;
             case AttributeType.Integer:
                 return !int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var integerValue) 
-                    ? throw new ValidationException($"attributes.{attribute.Id}", $"{attribute.Name} must be an integer") 
+                    ? throw new ValidationException($"attributes.{attribute.Id}", $"{GetAttributeName(attribute)} must be an integer") 
                     : integerValue.ToString(CultureInfo.InvariantCulture);
 
             case AttributeType.Boolean:
                 return !bool.TryParse(value, out var boolValue) 
-                    ? throw new ValidationException($"attributes.{attribute.Id}", $"{attribute.Name} must be true or false") 
+                    ? throw new ValidationException($"attributes.{attribute.Id}", $"{GetAttributeName(attribute)} must be true or false") 
                     : boolValue.ToString();
 
             case AttributeType.Select:
                 return optionId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
             default:
-                throw new ValidationException($"attributes.{attribute.Id}", $"{attribute.Name} type is invalid");
+                throw new ValidationException($"attributes.{attribute.Id}", $"{GetAttributeName(attribute)} type is invalid");
         }
     }
+
+    private static string GetAttributeName(ProductAttribute attribute) =>
+        attribute.Translations
+            .FirstOrDefault(x => x.LanguageCode == LanguageCodes.Georgian)?.Name
+        ?? attribute.Translations.FirstOrDefault()?.Name
+        ?? $"Attribute {attribute.Id}";
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

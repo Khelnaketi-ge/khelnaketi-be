@@ -22,6 +22,7 @@ public sealed class UpdateCategoryAttributeCommandHandler(IApplicationDbContext 
         var categoryAttribute = await context.CategoryAttributes
             .Include(x => x.ProductAttribute)
                 .ThenInclude(x => x.Options)
+                    .ThenInclude(x => x.Translations)
             .SingleOrDefaultAsync(x => x.Id == request.CategoryAttributeId, cancellationToken);
 
         if (categoryAttribute is null)

@@ -1,4 +1,5 @@
 using FluentValidation;
+using Handmade.Application.Common.Localization;
 using Handmade.Domain.Enums;
 
 namespace Handmade.Application.Features.Products.Commands.UpdateProduct;
@@ -13,12 +14,7 @@ public sealed class UpdateProductCommandHandlerValidation : AbstractValidator<Up
         RuleFor(x => x.CategoryId)
             .GreaterThan(0).WithMessage("Category is required");
 
-        RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Product name is required")
-            .MaximumLength(180).WithMessage("Product name is too long");
-
-        RuleFor(x => x.Description)
-            .MaximumLength(4000).WithMessage("Description is too long");
+        TranslationValidation.ValidateProductTranslations(RuleFor(x => x.Translations));
 
         RuleFor(x => x.Sku)
             .MaximumLength(80).WithMessage("SKU is too long");
@@ -28,7 +24,8 @@ public sealed class UpdateProductCommandHandlerValidation : AbstractValidator<Up
 
         RuleFor(x => x.Status)
             .IsInEnum().WithMessage("Product status is invalid")
-            .Must(x => x is ProductStatus.Draft or ProductStatus.Active).WithMessage("Product status is invalid");
+            .Must(x => x is ProductStatus.Draft or ProductStatus.Active or ProductStatus.Archived)
+            .WithMessage("Product status is invalid");
 
         RuleForEach(x => x.Images)
             .ChildRules(image =>

@@ -37,6 +37,7 @@ public sealed class LinkCategoryAttributeCommandHandler(IApplicationDbContext co
 
         var attribute = await context.ProductAttributes
             .Include(x => x.Options)
+                .ThenInclude(x => x.Translations)
             .SingleOrDefaultAsync(x => x.Id == request.AttributeId, cancellationToken);
 
         if (attribute is null)

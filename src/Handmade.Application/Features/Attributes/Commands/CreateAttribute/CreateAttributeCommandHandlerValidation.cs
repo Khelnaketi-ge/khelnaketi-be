@@ -1,6 +1,6 @@
 using FluentValidation;
+using Handmade.Application.Common.Localization;
 using Handmade.Application.Interfaces;
-using Handmade.Domain.Common;
 using Handmade.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,14 +10,18 @@ public sealed class CreateAttributeCommandHandlerValidation : AbstractValidator<
 {
     public CreateAttributeCommandHandlerValidation(IApplicationDbContext context)
     {
-        RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Attribute name is required")
-            .MaximumLength(160).WithMessage("Attribute name is too long")
+        TranslationValidation.ValidateAttributeTranslations(RuleFor(x => x.Translations));
+
+        RuleFor(x => x.Translations)
             .MustAsync(async (name, cancellationToken) =>
             {
-                var normalizedName = TextNormalizer.Normalize(name);
+                var ka = TranslationValidation.Georgian(
+                    name,
+                    translation => translation.LanguageCode);
                 return !await context.ProductAttributes.AnyAsync(
-                    x => x.NormalizedName == normalizedName,
+                    x => x.Translations.Any(t =>
+                        t.LanguageCode == LanguageCodes.Georgian
+                        && t.Name == ka.Name.Trim()),
                     cancellationToken);
             })
             .WithMessage("Attribute name already exists");
@@ -31,19 +35,18 @@ public sealed class CreateAttributeCommandHandlerValidation : AbstractValidator<
         RuleForEach(x => x.Options)
             .ChildRules(option =>
             {
-                option.RuleFor(x => x.Value)
-                    .NotEmpty().WithMessage("Option value is required")
-                    .MaximumLength(160).WithMessage("Option value is too long");
+                TranslationValidation.ValidateAttributeOptionTranslations(option.RuleFor(x => x.Translations));
             });
 
         When(x => x.Type == AttributeType.Select, () =>
         {
             RuleFor(x => x.Options)
                 .Must(options => options is null || options
-                    .Where(x => !string.IsNullOrWhiteSpace(x.Value))
-                    .Select(x => TextNormalizer.Normalize(x.Value))
+                    .Select(x => TranslationValidation.Georgian(
+                        x.Translations,
+                        translation => translation.LanguageCode).Value.Trim())
                     .Distinct()
-                    .Count() == options.Count(x => !string.IsNullOrWhiteSpace(x.Value)))
+                    .Count() == options.Count)
                 .WithMessage("Option values must be unique");
         });
     }

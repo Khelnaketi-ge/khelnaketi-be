@@ -1,4 +1,5 @@
 using Handmade.Application.Interfaces;
+using Handmade.Application.Features.Attributes.Models;
 using Handmade.Domain.Entities;
 using Handmade.Domain.Enums;
 using Mapster;
@@ -9,6 +10,7 @@ public sealed class ProductDto : IMapFrom<Product>
 {
     public int Id { get; set; }
     public int BrandId { get; set; }
+    public string BrandName { get; set; } = null!;
     public int CategoryId { get; set; }
     public string CategoryName { get; set; } = null!;
     public string Name { get; set; } = null!;
@@ -19,19 +21,36 @@ public sealed class ProductDto : IMapFrom<Product>
     public ProductStatus Status { get; set; }
     public DateTimeOffset Created { get; set; }
 
+    public IReadOnlyCollection<ProductTranslationDto> Translations { get; set; } = [];
     public IReadOnlyCollection<ProductImageDto> Images { get; set; } = [];
     public IReadOnlyCollection<ProductAttributeValueDto> AttributeValues { get; set; } = [];
 
     public void ConfigureMapping(TypeAdapterConfig config)
     {
         config.NewConfig<Product, ProductDto>()
-            .Map(dest => dest.CategoryName, src => src.Category.Name)
+            .Map(dest => dest.BrandName, src => src.Brand.Name)
+            .Map(dest => dest.CategoryName, src => src.Category.Translations
+                .FirstOrDefault(x => x.LanguageCode == Common.Localization.LanguageCodes.Georgian)!.Name)
+            .Map(dest => dest.Name, src => src.Translations
+                .FirstOrDefault(x => x.LanguageCode == Common.Localization.LanguageCodes.Georgian)!.Title)
+            .Map(dest => dest.Description, src => src.Translations
+                .FirstOrDefault(x => x.LanguageCode == Common.Localization.LanguageCodes.Georgian)!.Description)
             .Map(dest => dest.Images, src => src.Images
                 .OrderBy(x => x.Order)
                 .ThenBy(x => x.Id))
             .Map(dest => dest.AttributeValues, src => src.AttributeValues
-                .OrderBy(x => x.ProductAttribute.Name));
+                .OrderBy(x => x.ProductAttribute.Translations
+                    .FirstOrDefault(t => t.LanguageCode == Common.Localization.LanguageCodes.Georgian)!.Name));
     }
+}
+
+public sealed class ProductTranslationDto : IMapFrom<ProductTranslation>
+{
+    public string LanguageCode { get; set; } = null!;
+    public string Title { get; set; } = null!;
+    public string Slug { get; set; } = null!;
+    public string? ShortDescription { get; set; }
+    public string? Description { get; set; }
 }
 
 public sealed class ProductImageDto : IMapFrom<ProductImage>
@@ -65,11 +84,13 @@ public sealed class ProductAttributeValueDto : IMapFrom<ProductAttributeValue>
     {
         config.NewConfig<ProductAttributeValue, ProductAttributeValueDto>()
             .Map(dest => dest.AttributeId, src => src.ProductAttributeId)
-            .Map(dest => dest.AttributeName, src => src.ProductAttribute.Name)
+            .Map(dest => dest.AttributeName, src => src.ProductAttribute.Translations
+                .FirstOrDefault(x => x.LanguageCode == Common.Localization.LanguageCodes.Georgian)!.Name)
             .Map(dest => dest.Type, src => src.ProductAttribute.Type)
             .Map(dest => dest.OptionId, src => src.AttributeOptionId)
             .Map(dest => dest.OptionValue, src => src.AttributeOption != null
-                ? src.AttributeOption.Value
+                ? src.AttributeOption.Translations
+                    .FirstOrDefault(x => x.LanguageCode == Common.Localization.LanguageCodes.Georgian)!.Value
                 : null);
     }
 }

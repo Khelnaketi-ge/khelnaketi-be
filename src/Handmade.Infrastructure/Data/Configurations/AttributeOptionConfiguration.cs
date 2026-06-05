@@ -15,22 +15,10 @@ internal class AttributeOptionConfiguration : BaseAuditableEntityConfiguration<A
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Value)
-            .HasMaxLength(160)
-            .IsRequired();
-
-        builder.Property(x => x.NormalizedValue)
-            .HasMaxLength(160)
-            .IsRequired();
-
         builder.Property(x => x.Order)
             .HasDefaultValue(0);
 
         builder.HasIndex(x => x.ProductAttributeId);
-
-        builder.HasIndex(x => new { x.ProductAttributeId, x.NormalizedValue })
-            .IsUnique()
-            .HasFilter("\"Deleted\" = false");
 
         builder.HasOne(x => x.ProductAttribute)
             .WithMany(x => x.Options)

@@ -14,7 +14,13 @@ public sealed record CategoryDto(
     int? ParentId,
     bool IsLeaf,
     IReadOnlyCollection<CategoryDto> Children,
+    IReadOnlyCollection<CategoryTranslationDto> Translations,
     IReadOnlyCollection<CategoryAttributeDto> Attributes);
+
+public sealed record CategoryTranslationDto(
+    string LanguageCode,
+    string Name,
+    string Slug);
 
 public sealed record CategoryAttributeDto(
     int Id,
@@ -36,18 +42,22 @@ public sealed class GetCategoriesQueryHandler(IApplicationDbContext context)
     {
         var categories = await context.Categories
             .AsNoTracking()
+            .Include(x => x.Translations)
+            .Include(x => x.CategoryAttributes)
+                .ThenInclude(x => x.ProductAttribute)
+                    .ThenInclude(x => x.Translations)
             .Include(x => x.CategoryAttributes)
                 .ThenInclude(x => x.ProductAttribute)
                     .ThenInclude(x => x.Options)
+                        .ThenInclude(x => x.Translations)
             .OrderBy(x => x.ParentId)
-            .ThenBy(x => x.Name)
             .ToListAsync(cancellationToken);
 
         var childrenByParentId = categories
             .GroupBy(x => x.ParentId)
             .ToDictionary(
                 x => x.Key ?? 0,
-                x => x.OrderBy(category => category.Name).ToList());
+                x => x.OrderBy(GetCategoryName).ToList());
 
         return BuildTree(null, childrenByParentId);
     }
@@ -68,18 +78,25 @@ public sealed class GetCategoriesQueryHandler(IApplicationDbContext context)
 
                 return new CategoryDto(
                     category.Id,
-                    category.Name,
-                    category.Description,
+                    GetCategoryName(category),
+                    null,
                     category.ParentId,
                     children.Count == 0,
                     children,
+                    category.Translations
+                        .OrderBy(x => x.LanguageCode)
+                        .Select(x => new CategoryTranslationDto(
+                            x.LanguageCode,
+                            x.Name,
+                            x.Slug))
+                        .ToList(),
                     category.CategoryAttributes
                         .OrderBy(x => x.Order)
-                        .ThenBy(x => x.ProductAttribute.Name)
+                        .ThenBy(x => AttributeMappings.GetAttributeName(x.ProductAttribute))
                         .Select(attribute => new CategoryAttributeDto(
                             attribute.Id,
                             attribute.ProductAttributeId,
-                            attribute.ProductAttribute.Name,
+                            AttributeMappings.GetAttributeName(attribute.ProductAttribute),
                             attribute.ProductAttribute.Type,
                             attribute.ProductAttribute.Unit,
                             attribute.IsRequired,
@@ -87,11 +104,27 @@ public sealed class GetCategoriesQueryHandler(IApplicationDbContext context)
                             attribute.Order,
                             attribute.ProductAttribute.Options
                                 .OrderBy(option => option.Order)
-                                .ThenBy(option => option.Value)
-                                .Select(option => new AttributeOptionDto(option.Id, option.Value, option.Order))
+                                .ThenBy(AttributeMappings.GetOptionValue)
+                                .Select(option => new AttributeOptionDto(
+                                    option.Id,
+                                    AttributeMappings.GetOptionValue(option),
+                                    option.Order,
+                                    option.Translations
+                                        .OrderBy(translation => translation.LanguageCode)
+                                        .Select(translation => new AttributeOptionTranslationDto(
+                                            translation.LanguageCode,
+                                            translation.Value,
+                                            translation.Slug))
+                                        .ToList()))
                                 .ToList()))
                         .ToList());
             })
             .ToList();
     }
+
+    private static string GetCategoryName(Domain.Entities.Category category) =>
+        category.Translations
+            .FirstOrDefault(x => x.LanguageCode == Common.Localization.LanguageCodes.Georgian)?.Name
+        ?? category.Translations.FirstOrDefault()?.Name
+        ?? $"Category {category.Id}";
 }

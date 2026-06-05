@@ -88,6 +88,8 @@ public sealed class UpdateMyBrandLogoCommandHandler(
                 brand.Created,
                 logoImage.Id,
                 uploadedLogo.PublicUrl,
+                brand.Slug,
+                brand.Description,
                 new BrandContactsDto(
                     brand.PhoneNumbers.Select(x => new BrandPhoneNumberDto(x.Id, x.PhoneNumber, x.Label, x.IsPrimary, x.IsActive)).ToList(),
                     brand.EmailAddresses.Select(x => new BrandEmailAddressDto(x.Id, x.Email, x.Label, x.IsPrimary, x.IsActive)).ToList(),

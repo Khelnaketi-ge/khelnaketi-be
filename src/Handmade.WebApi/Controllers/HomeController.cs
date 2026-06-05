@@ -11,8 +11,10 @@ namespace Handmade.WebApi.Controllers;
 public class HomeController(ISender sender) : ApiController(sender)
 {
     [HttpGet("popular-categories")]
-    public async Task<IActionResult> GetPopularCategories(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPopularCategories(
+        CancellationToken cancellationToken,
+        [FromQuery] string languageCode = "ka")
     {
-        return Ok(await Sender.Send(new GetHomeCategoriesQuery(), cancellationToken));
+        return Ok(await Sender.Send(new GetHomeCategoriesQuery(languageCode), cancellationToken));
     }
 }

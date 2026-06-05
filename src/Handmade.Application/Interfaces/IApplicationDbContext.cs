@@ -17,11 +17,15 @@ public interface IApplicationDbContext : IDisposable
     DbSet<BrandPhoneNumber> BrandPhoneNumbers { get; }
     DbSet<ImageAsset> ImageAssets { get; }
     DbSet<Category> Categories { get; }
+    DbSet<CategoryTranslation> CategoryTranslations { get; }
     DbSet<HomeCategory> HomeCategories { get; }
     DbSet<ProductAttribute> ProductAttributes { get; }
+    DbSet<ProductAttributeTranslation> ProductAttributeTranslations { get; }
     DbSet<AttributeOption> AttributeOptions { get; }
+    DbSet<AttributeOptionTranslation> AttributeOptionTranslations { get; }
     DbSet<CategoryAttribute> CategoryAttributes { get; }
     DbSet<Product> Products { get; }
+    DbSet<ProductTranslation> ProductTranslations { get; }
     DbSet<ProductAttributeValue> ProductAttributeValues { get; }
     DbSet<ProductImage> ProductImages { get; }
     DbSet<Cart> Carts { get; }

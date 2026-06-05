@@ -4,6 +4,7 @@ using Handmade.Application.Features.Attributes.Commands.CreateAttributeOption;
 using Handmade.Application.Features.Attributes.Commands.DeleteAttribute;
 using Handmade.Application.Features.Attributes.Commands.DeleteAttributeOption;
 using Handmade.Application.Features.Attributes.Commands.ReorderAttributeOptions;
+using Handmade.Application.Features.Attributes.Commands.UpdateAttribute;
 using Handmade.Application.Features.Attributes.Commands.UpdateAttributeStatus;
 using Handmade.Application.Features.Attributes.Commands.UpdateAttributeOption;
 using Handmade.Application.Features.Attributes.Queries.GetAttributes;
@@ -37,6 +38,14 @@ public class AttributesController(ISender sender) : ApiController(sender)
     [HttpPatch("status")]
     public async Task<IActionResult> UpdateStatus(
         [FromBody] UpdateAttributeStatusCommand command,
+        CancellationToken cancellationToken)
+    {
+        return Ok(await Sender.Send(command, cancellationToken));
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> Update(
+        [FromBody] UpdateAttributeCommand command,
         CancellationToken cancellationToken)
     {
         return Ok(await Sender.Send(command, cancellationToken));

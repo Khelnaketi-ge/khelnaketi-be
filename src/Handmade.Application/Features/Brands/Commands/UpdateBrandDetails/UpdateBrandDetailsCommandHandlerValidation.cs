@@ -26,5 +26,8 @@ public sealed class UpdateBrandDetailsCommandHandlerValidation : AbstractValidat
 
         RuleFor(x => x.LegalName)
             .MaximumLength(200).WithMessage("Legal name is too long");
+
+        RuleFor(x => x.Description)
+            .MaximumLength(4000).WithMessage("Brand description is too long");
     }
 }

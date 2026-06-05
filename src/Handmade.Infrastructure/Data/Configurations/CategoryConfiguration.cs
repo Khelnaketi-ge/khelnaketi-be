@@ -15,26 +15,7 @@ internal class CategoryConfiguration : BaseAuditableEntityConfiguration<Category
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Name)
-            .HasMaxLength(160)
-            .IsRequired();
-
-        builder.Property(x => x.NormalizedName)
-            .HasMaxLength(160)
-            .IsRequired();
-
-        builder.Property(x => x.Description)
-            .HasMaxLength(500);
-
         builder.HasIndex(x => x.ParentId);
-
-        builder.HasIndex(x => x.NormalizedName)
-            .IsUnique()
-            .HasFilter("\"Deleted\" = false AND \"ParentId\" IS NULL");
-
-        builder.HasIndex(x => new { x.ParentId, x.NormalizedName })
-            .IsUnique()
-            .HasFilter("\"Deleted\" = false AND \"ParentId\" IS NOT NULL");
 
         builder.HasOne(x => x.Parent)
             .WithMany(x => x.Children)

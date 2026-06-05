@@ -35,11 +35,18 @@ public sealed class GetMyProductsQueryHandler(
 
         var products = await context.Products
             .AsNoTracking()
+            .Include(x => x.Brand)
             .Include(x => x.Category)
+                .ThenInclude(x => x.Translations)
+            .Include(x => x.Translations)
             .Include(x => x.Images)
                 .ThenInclude(x => x.Image)
             .Include(x => x.AttributeValues)
                 .ThenInclude(x => x.ProductAttribute)
+                    .ThenInclude(x => x.Translations)
+            .Include(x => x.AttributeValues)
+                .ThenInclude(x => x.AttributeOption)
+                    .ThenInclude(x => x!.Translations)
             .Include(x => x.AttributeValues)
                 .ThenInclude(x => x.AttributeOption)
             .Where(x => isSuperAdmin || x.Brand.OwnerUserId == currentUser.Id.Value)

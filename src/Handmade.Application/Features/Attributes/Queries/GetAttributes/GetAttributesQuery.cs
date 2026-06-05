@@ -16,10 +16,14 @@ public sealed class GetAttributesQueryHandler(IApplicationDbContext context)
     {
         var attributes = await context.ProductAttributes
             .AsNoTracking()
+            .Include(x => x.Translations)
             .Include(x => x.Options)
-            .OrderBy(x => x.Name)
+                .ThenInclude(x => x.Translations)
             .ToListAsync(cancellationToken);
 
-        return attributes.Select(AttributeMappings.ToDto).ToList();
+        return attributes
+            .OrderBy(AttributeMappings.GetAttributeName)
+            .Select(AttributeMappings.ToDto)
+            .ToList();
     }
 }

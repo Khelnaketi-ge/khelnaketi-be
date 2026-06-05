@@ -30,6 +30,9 @@ public sealed class CreateBrandCommandHandlerValidation : AbstractValidator<Crea
         RuleFor(x => x.LegalName)
             .MaximumLength(200).WithMessage("Legal name is too long");
 
+        RuleFor(x => x.Description)
+            .MaximumLength(4000).WithMessage("Brand description is too long");
+
         When(x => x.Logo is not null, () =>
         {
             RuleFor(x => x.Logo!.FileName)

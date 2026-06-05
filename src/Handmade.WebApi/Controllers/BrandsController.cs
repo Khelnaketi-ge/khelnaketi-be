@@ -17,7 +17,10 @@ namespace Handmade.WebApi.Controllers;
 [Route("api/v{version:apiVersion}/[controller]")]
 public class BrandsController(ISender sender) : ApiController(sender)
 {
-    public sealed record UpdateBrandDetailsRequest(string Name, string? LegalName);
+    public sealed record UpdateBrandDetailsRequest(
+        string Name,
+        string? LegalName,
+        string? Description);
 
     [HttpGet]
     [HasPermission(isSuperAdminRequired: true)]
@@ -53,7 +56,11 @@ public class BrandsController(ISender sender) : ApiController(sender)
         CancellationToken cancellationToken)
     {
         return Ok(await Sender.Send(
-            new UpdateBrandDetailsCommand(brandId, request.Name, request.LegalName),
+            new UpdateBrandDetailsCommand(
+                brandId,
+                request.Name,
+                request.LegalName,
+                request.Description),
             cancellationToken));
     }
 

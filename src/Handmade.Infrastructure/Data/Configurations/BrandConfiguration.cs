@@ -24,6 +24,13 @@ internal class BrandConfiguration : BaseAuditableEntityConfiguration<Brand>
             .HasMaxLength(160)
             .IsRequired();
 
+        builder.Property(x => x.Slug)
+            .HasMaxLength(220)
+            .IsRequired();
+
+        builder.Property(x => x.Description)
+            .HasMaxLength(4000);
+
         builder.Property(x => x.LegalName)
             .HasMaxLength(200);
 
@@ -36,6 +43,10 @@ internal class BrandConfiguration : BaseAuditableEntityConfiguration<Brand>
         builder.HasIndex(x => x.Status);
 
         builder.HasIndex(x => x.NormalizedName)
+            .IsUnique()
+            .HasFilter("\"Deleted\" = false");
+
+        builder.HasIndex(x => x.Slug)
             .IsUnique()
             .HasFilter("\"Deleted\" = false");
 

@@ -35,6 +35,8 @@ public sealed class GetBrandsQueryHandler(
                 brand.Created,
                 brand.LogoImageId,
                 brand.LogoImage == null ? null : imageStorage.GetPublicUrl(brand.LogoImage.ObjectKey),
+                brand.Slug,
+                brand.Description,
                 new BrandContactsDto(
                     brand.PhoneNumbers
                         .OrderByDescending(x => x.IsPrimary)

@@ -19,11 +19,15 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<BrandPhoneNumber> BrandPhoneNumbers => Set<BrandPhoneNumber>();
     public DbSet<ImageAsset> ImageAssets => Set<ImageAsset>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<CategoryTranslation> CategoryTranslations => Set<CategoryTranslation>();
     public DbSet<HomeCategory> HomeCategories => Set<HomeCategory>();
     public DbSet<ProductAttribute> ProductAttributes => Set<ProductAttribute>();
+    public DbSet<ProductAttributeTranslation> ProductAttributeTranslations => Set<ProductAttributeTranslation>();
     public DbSet<AttributeOption> AttributeOptions => Set<AttributeOption>();
+    public DbSet<AttributeOptionTranslation> AttributeOptionTranslations => Set<AttributeOptionTranslation>();
     public DbSet<CategoryAttribute> CategoryAttributes => Set<CategoryAttribute>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductTranslation> ProductTranslations => Set<ProductTranslation>();
     public DbSet<ProductAttributeValue> ProductAttributeValues => Set<ProductAttributeValue>();
     public DbSet<ProductImage> ProductImages => Set<ProductImage>();
     public DbSet<Cart> Carts => Set<Cart>();

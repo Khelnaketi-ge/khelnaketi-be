@@ -1,5 +1,7 @@
 using System.Globalization;
 using Handmade.Application.Common.Exceptions;
+using Handmade.Application.Common.Localization;
+using Handmade.Application.Common.Slugs;
 using Handmade.Application.Features.Products.Commands.CreateProduct;
 using Handmade.Application.Features.Products.Models;
 using Handmade.Application.Interfaces;
@@ -15,14 +17,14 @@ namespace Handmade.Application.Features.Products.Commands.UpdateProduct;
 
 public sealed record UpdateProductCommand(
     int Id,
+    int? BrandId,
     int CategoryId,
-    string Name,
-    string? Description,
     string? Sku,
     decimal? Price,
     bool IsInStock,
     ProductStatus Status,
     IReadOnlyCollection<ProductAttributeValueInput>? AttributeValues,
+    IReadOnlyCollection<ProductTranslationInput> Translations,
     IReadOnlyCollection<int>? ExistingImageIds,
     int? PrimaryExistingImageId,
     int? PrimaryImageIndex,
@@ -43,16 +45,25 @@ public sealed class UpdateProductCommandHandler(
             throw new UnauthorizedException(UnauthorizedErrors.InvalidCreds);
         }
 
+        var currentUserAccessLevel = await context.Users
+            .Where(x => x.Id == currentUser.Id.Value)
+            .Select(x => x.AccessLevel)
+            .SingleOrDefaultAsync(cancellationToken);
+        var isSuperAdmin = currentUserAccessLevel == AccessLevel.SuperAdmin;
+
         var product = await context.Products
             .Include(x => x.Brand)
             .Include(x => x.Category)
+            .Include(x => x.Translations)
             .Include(x => x.Images)
                 .ThenInclude(x => x.Image)
             .Include(x => x.AttributeValues)
                 .ThenInclude(x => x.ProductAttribute)
             .Include(x => x.AttributeValues)
                 .ThenInclude(x => x.AttributeOption)
-            .SingleOrDefaultAsync(x => x.Id == request.Id && x.Brand.OwnerUserId == currentUser.Id.Value, cancellationToken);
+            .SingleOrDefaultAsync(
+                x => x.Id == request.Id && (isSuperAdmin || x.Brand.OwnerUserId == currentUser.Id.Value),
+                cancellationToken);
 
         if (product is null)
         {
@@ -61,6 +72,9 @@ public sealed class UpdateProductCommandHandler(
 
         var category = await context.Categories
             .Include(x => x.Children)
+            .Include(x => x.CategoryAttributes)
+                .ThenInclude(x => x.ProductAttribute)
+                    .ThenInclude(x => x.Translations)
             .Include(x => x.CategoryAttributes)
                 .ThenInclude(x => x.ProductAttribute)
                     .ThenInclude(x => x.Options)
@@ -96,12 +110,43 @@ public sealed class UpdateProductCommandHandler(
 
             product.CategoryId = category.Id;
             product.Category = category;
-            product.Name = request.Name.Trim();
-            product.Description = NormalizeOptional(request.Description);
+            if (request.BrandId.HasValue && isSuperAdmin)
+            {
+                var brandExists = await context.Brands.AnyAsync(
+                    x => x.Id == request.BrandId.Value,
+                    cancellationToken);
+
+                if (!brandExists)
+                {
+                    throw new ValidationException(nameof(request.BrandId), "Brand was not found");
+                }
+
+                product.BrandId = request.BrandId.Value;
+            }
+
             product.Sku = NormalizeOptional(request.Sku);
             product.Price = request.Price;
             product.IsInStock = request.IsInStock;
             product.Status = request.Status;
+
+            foreach (var translation in product.Translations.ToList())
+            {
+                context.ProductTranslations.Remove(translation);
+            }
+
+            product.Translations.Clear();
+            foreach (var input in request.Translations)
+            {
+                product.Translations.Add(new ProductTranslation
+                {
+                    ProductId = product.Id,
+                    LanguageCode = LanguageCodes.Normalize(input.LanguageCode),
+                    Title = input.Title.Trim(),
+                    Slug = SlugGenerator.GenerateForEntity(input.Title, "p", product.Id, 220),
+                    ShortDescription = NormalizeOptional(input.ShortDescription),
+                    Description = NormalizeOptional(input.Description)
+                });
+            }
 
             foreach (var attributeValue in product.AttributeValues.ToList())
             {
@@ -234,7 +279,7 @@ public sealed class UpdateProductCommandHandler(
             {
                 throw new ValidationException(
                     $"attributes.{attribute.Id}",
-                    $"{attribute.Name} is required");
+                    $"{GetAttributeName(attribute)} is required");
             }
 
             if (string.IsNullOrWhiteSpace(value) && optionId is null)
@@ -262,12 +307,12 @@ public sealed class UpdateProductCommandHandler(
 
         if (optionId is null)
         {
-            throw new ValidationException($"attributes.{attribute.Id}", $"{attribute.Name} option is required");
+            throw new ValidationException($"attributes.{attribute.Id}", $"{GetAttributeName(attribute)} option is required");
         }
 
         if (attribute.Options.All(x => x.Id != optionId.Value))
         {
-            throw new ValidationException($"attributes.{attribute.Id}", $"{attribute.Name} option is invalid");
+            throw new ValidationException($"attributes.{attribute.Id}", $"{GetAttributeName(attribute)} option is invalid");
         }
 
         return optionId;
@@ -282,23 +327,29 @@ public sealed class UpdateProductCommandHandler(
             case AttributeType.Integer:
                 if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var integerValue))
                 {
-                    throw new ValidationException($"attributes.{attribute.Id}", $"{attribute.Name} must be an integer");
+                    throw new ValidationException($"attributes.{attribute.Id}", $"{GetAttributeName(attribute)} must be an integer");
                 }
 
                 return integerValue.ToString(CultureInfo.InvariantCulture);
             case AttributeType.Boolean:
                 if (!bool.TryParse(value, out var boolValue))
                 {
-                    throw new ValidationException($"attributes.{attribute.Id}", $"{attribute.Name} must be true or false");
+                    throw new ValidationException($"attributes.{attribute.Id}", $"{GetAttributeName(attribute)} must be true or false");
                 }
 
                 return boolValue.ToString();
             case AttributeType.Select:
                 return optionId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
             default:
-                throw new ValidationException($"attributes.{attribute.Id}", $"{attribute.Name} type is invalid");
+                throw new ValidationException($"attributes.{attribute.Id}", $"{GetAttributeName(attribute)} type is invalid");
         }
     }
+
+    private static string GetAttributeName(ProductAttribute attribute) =>
+        attribute.Translations
+            .FirstOrDefault(x => x.LanguageCode == LanguageCodes.Georgian)?.Name
+        ?? attribute.Translations.FirstOrDefault()?.Name
+        ?? $"Attribute {attribute.Id}";
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

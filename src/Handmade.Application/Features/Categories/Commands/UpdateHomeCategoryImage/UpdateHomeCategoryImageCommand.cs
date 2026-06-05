@@ -30,6 +30,8 @@ public sealed class UpdateHomeCategoryImageCommandHandler(
         var homeCategory = await context.HomeCategories
             .Include(x => x.Category)
                 .ThenInclude(x => x.Children)
+            .Include(x => x.Category)
+                .ThenInclude(x => x.Translations)
             .Include(x => x.Image)
             .SingleOrDefaultAsync(x => x.Id == request.HomeCategoryId, cancellationToken);
 
@@ -74,11 +76,14 @@ public sealed class UpdateHomeCategoryImageCommandHandler(
                 await imageStorage.DeleteAsync(oldObjectKey, CancellationToken.None);
             }
 
+            var translation = HomeCategoryDtoMapper.GetTranslation(homeCategory.Category, "ka");
+
             return new HomeCategoryDto(
                 homeCategory.Id,
                 homeCategory.CategoryId,
-                homeCategory.Category.Name,
-                homeCategory.Category.Description,
+                translation.Name,
+                translation.Slug,
+                null,
                 homeCategory.Category.ParentId,
                 homeCategory.Category.Children.Count == 0,
                 homeCategory.Order,

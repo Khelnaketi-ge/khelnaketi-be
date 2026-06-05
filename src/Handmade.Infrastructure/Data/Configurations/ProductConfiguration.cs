@@ -16,17 +16,6 @@ internal class ProductConfiguration : BaseAuditableEntityConfiguration<Product>
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Name)
-            .HasMaxLength(180)
-            .IsRequired();
-
-        builder.Property(x => x.NormalizedName)
-            .HasMaxLength(180)
-            .IsRequired();
-
-        builder.Property(x => x.Description)
-            .HasMaxLength(4000);
-
         builder.Property(x => x.Sku)
             .HasMaxLength(80);
 
@@ -43,7 +32,6 @@ internal class ProductConfiguration : BaseAuditableEntityConfiguration<Product>
         builder.HasIndex(x => x.BrandId);
         builder.HasIndex(x => x.CategoryId);
         builder.HasIndex(x => x.Status);
-        builder.HasIndex(x => x.NormalizedName);
 
         builder.HasIndex(x => new { x.BrandId, x.Sku })
             .IsUnique()

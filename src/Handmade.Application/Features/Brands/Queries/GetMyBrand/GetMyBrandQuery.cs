@@ -17,6 +17,8 @@ public sealed record BrandOverviewDto(
     DateTimeOffset Created,
     Guid? LogoImageId,
     string? LogoImageUrl,
+    string Slug,
+    string? Description,
     BrandContactsDto Contacts);
 
 public sealed class GetMyBrandQueryHandler(
@@ -54,6 +56,8 @@ public sealed class GetMyBrandQueryHandler(
             brand.Created,
             brand.LogoImageId,
             brand.LogoImage is null ? null : imageStorage.GetPublicUrl(brand.LogoImage.ObjectKey),
+            brand.Slug,
+            brand.Description,
             new BrandContactsDto(
                 brand.PhoneNumbers
                     .OrderByDescending(x => x.IsPrimary)

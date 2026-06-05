@@ -1,6 +1,6 @@
 using FluentValidation;
+using Handmade.Application.Common.Localization;
 using Handmade.Application.Interfaces;
-using Handmade.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace Handmade.Application.Features.Categories.Commands.UpdateCategory;
@@ -12,9 +12,9 @@ public sealed class UpdateCategoryCommandHandlerValidation : AbstractValidator<U
         RuleFor(x => x.CategoryId)
             .GreaterThan(0).WithMessage("Category is required");
 
-        RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Category name is required")
-            .MaximumLength(160).WithMessage("Category name is too long")
+        TranslationValidation.ValidateCategoryTranslations(RuleFor(x => x.Translations));
+
+        RuleFor(x => x.Translations)
             .MustAsync(async (command, name, cancellationToken) =>
             {
                 var category = await context.Categories
@@ -26,16 +26,17 @@ public sealed class UpdateCategoryCommandHandlerValidation : AbstractValidator<U
                     return true;
                 }
 
-                var normalizedName = TextNormalizer.Normalize(name);
+                var ka = TranslationValidation.Georgian(
+                    command.Translations,
+                    translation => translation.LanguageCode);
                 return !await context.Categories.AnyAsync(
                     x => x.Id != command.CategoryId
                         && x.ParentId == category.ParentId
-                        && x.NormalizedName == normalizedName,
+                        && x.Translations.Any(t =>
+                            t.LanguageCode == LanguageCodes.Georgian
+                            && t.Name == ka.Name.Trim()),
                     cancellationToken);
             })
             .WithMessage("Category name already exists under this parent");
-
-        RuleFor(x => x.Description)
-            .MaximumLength(1000).WithMessage("Category description is too long");
     }
 }

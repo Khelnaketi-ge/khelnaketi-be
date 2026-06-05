@@ -9,7 +9,7 @@ internal static class CategoryAttributeMappings
         new(
             attribute.Id,
             attribute.ProductAttributeId,
-            attribute.ProductAttribute.Name,
+            AttributeMappings.GetAttributeName(attribute.ProductAttribute),
             attribute.ProductAttribute.Type,
             attribute.ProductAttribute.Unit,
             attribute.IsRequired,
@@ -17,7 +17,17 @@ internal static class CategoryAttributeMappings
             attribute.Order,
             attribute.ProductAttribute.Options
                 .OrderBy(option => option.Order)
-                .ThenBy(option => option.Value)
-                .Select(option => new AttributeOptionDto(option.Id, option.Value, option.Order))
+                .ThenBy(AttributeMappings.GetOptionValue)
+                .Select(option => new AttributeOptionDto(
+                    option.Id,
+                    AttributeMappings.GetOptionValue(option),
+                    option.Order,
+                    option.Translations
+                        .OrderBy(translation => translation.LanguageCode)
+                        .Select(translation => new AttributeOptionTranslationDto(
+                            translation.LanguageCode,
+                            translation.Value,
+                            translation.Slug))
+                        .ToList()))
                 .ToList());
 }

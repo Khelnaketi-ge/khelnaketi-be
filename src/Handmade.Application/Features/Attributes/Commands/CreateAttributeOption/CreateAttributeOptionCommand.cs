@@ -1,7 +1,8 @@
 using Handmade.Application.Common.Exceptions;
+using Handmade.Application.Common.Localization;
+using Handmade.Application.Common.Slugs;
 using Handmade.Application.Features.Attributes.Models;
 using Handmade.Application.Interfaces;
-using Handmade.Domain.Common;
 using Handmade.Domain.Entities;
 using Handmade.Domain.Enums;
 using MediatR;
@@ -11,8 +12,8 @@ namespace Handmade.Application.Features.Attributes.Commands.CreateAttributeOptio
 
 public sealed record CreateAttributeOptionCommand(
     int AttributeId,
-    string Value,
-    int Order) : IRequest<AttributeOptionDto>;
+    int Order,
+    IReadOnlyCollection<AttributeOptionTranslationInput> Translations) : IRequest<AttributeOptionDto>;
 
 public sealed class CreateAttributeOptionCommandHandler(IApplicationDbContext context)
     : IRequestHandler<CreateAttributeOptionCommand, AttributeOptionDto>
@@ -34,26 +35,50 @@ public sealed class CreateAttributeOptionCommandHandler(IApplicationDbContext co
             throw new ValidationException(nameof(request.AttributeId), "Options can only be added to select attributes");
         }
 
-        var normalizedValue = TextNormalizer.Normalize(request.Value);
+        var kaTranslation = TranslationValidation.Georgian(
+            request.Translations,
+            translation => translation.LanguageCode);
         var duplicatedValue = await context.AttributeOptions.AnyAsync(
-            x => x.ProductAttributeId == attribute.Id && x.NormalizedValue == normalizedValue,
+            x => x.ProductAttributeId == attribute.Id
+                && x.Translations.Any(t =>
+                    t.LanguageCode == LanguageCodes.Georgian
+                    && t.Value == kaTranslation.Value.Trim()),
             cancellationToken);
 
         if (duplicatedValue)
         {
-            throw new ValidationException(nameof(request.Value), "Option value already exists for this attribute");
+            throw new ValidationException(nameof(request.Translations), "Option value already exists for this attribute");
         }
 
         var option = new AttributeOption
         {
             ProductAttributeId = attribute.Id,
-            Value = request.Value.Trim(),
             Order = request.Order
         };
 
         context.AttributeOptions.Add(option);
         await context.SaveChangesAsync(cancellationToken);
 
-        return new AttributeOptionDto(option.Id, option.Value, option.Order);
+        foreach (var input in request.Translations)
+        {
+            option.Translations.Add(new AttributeOptionTranslation
+            {
+                AttributeOptionId = option.Id,
+                LanguageCode = LanguageCodes.Normalize(input.LanguageCode),
+                Value = input.Value.Trim(),
+                Slug = SlugGenerator.GenerateForEntity(input.Value, "ao", option.Id, 200)
+            });
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+
+        return new AttributeOptionDto(
+            option.Id,
+            AttributeMappings.GetOptionValue(option),
+            option.Order,
+            option.Translations
+                .OrderBy(x => x.LanguageCode)
+                .Select(x => new AttributeOptionTranslationDto(x.LanguageCode, x.Value, x.Slug))
+                .ToList());
     }
 }

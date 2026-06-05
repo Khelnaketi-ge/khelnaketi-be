@@ -23,6 +23,7 @@ public sealed class UpdateHomeCategoryCommandHandler(
     {
         var category = await context.Categories
             .Include(x => x.Children)
+            .Include(x => x.Translations)
             .SingleOrDefaultAsync(x => x.Id == request.CategoryId, cancellationToken);
 
         if (category is null)
@@ -56,11 +57,14 @@ public sealed class UpdateHomeCategoryCommandHandler(
 
         await context.SaveChangesAsync(cancellationToken);
 
+        var translation = HomeCategoryDtoMapper.GetTranslation(category, "ka");
+
         return new HomeCategoryDto(
             homeCategory.Id,
             category.Id,
-            category.Name,
-            category.Description,
+            translation.Name,
+            translation.Slug,
+            null,
             category.ParentId,
             category.Children.Count == 0,
             homeCategory.Order,

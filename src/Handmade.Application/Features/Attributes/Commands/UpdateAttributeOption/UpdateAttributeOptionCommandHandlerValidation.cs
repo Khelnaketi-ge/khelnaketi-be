@@ -1,4 +1,5 @@
 using FluentValidation;
+using Handmade.Application.Common.Localization;
 
 namespace Handmade.Application.Features.Attributes.Commands.UpdateAttributeOption;
 
@@ -9,8 +10,6 @@ public sealed class UpdateAttributeOptionCommandHandlerValidation : AbstractVali
         RuleFor(x => x.OptionId)
             .GreaterThan(0).WithMessage("Option is required");
 
-        RuleFor(x => x.Value)
-            .NotEmpty().WithMessage("Option value is required")
-            .MaximumLength(160).WithMessage("Option value is too long");
+        TranslationValidation.ValidateAttributeOptionTranslations(RuleFor(x => x.Translations));
     }
 }

@@ -24,6 +24,7 @@ public sealed class ReorderAttributeOptionsCommandHandler(IApplicationDbContext 
     {
         var attribute = await context.ProductAttributes
             .Include(x => x.Options)
+                .ThenInclude(x => x.Translations)
             .SingleOrDefaultAsync(x => x.Id == request.AttributeId, cancellationToken);
 
         if (attribute is null)
@@ -59,8 +60,18 @@ public sealed class ReorderAttributeOptionsCommandHandler(IApplicationDbContext 
 
         return attribute.Options
             .OrderBy(x => x.Order)
-            .ThenBy(x => x.Value)
-            .Select(x => new AttributeOptionDto(x.Id, x.Value, x.Order))
+            .ThenBy(AttributeMappings.GetOptionValue)
+            .Select(x => new AttributeOptionDto(
+                x.Id,
+                AttributeMappings.GetOptionValue(x),
+                x.Order,
+                x.Translations
+                    .OrderBy(translation => translation.LanguageCode)
+                    .Select(translation => new AttributeOptionTranslationDto(
+                        translation.LanguageCode,
+                        translation.Value,
+                        translation.Slug))
+                    .ToList()))
             .ToList();
     }
 }

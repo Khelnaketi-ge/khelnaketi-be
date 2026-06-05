@@ -15,14 +15,6 @@ internal class ProductAttributeConfiguration : BaseAuditableEntityConfiguration<
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Name)
-            .HasMaxLength(160)
-            .IsRequired();
-
-        builder.Property(x => x.NormalizedName)
-            .HasMaxLength(160)
-            .IsRequired();
-
         builder.Property(x => x.Type)
             .HasConversion<short>()
             .IsRequired();
@@ -35,9 +27,5 @@ internal class ProductAttributeConfiguration : BaseAuditableEntityConfiguration<
 
         builder.HasIndex(x => x.Type);
         builder.HasIndex(x => x.IsDisabled);
-
-        builder.HasIndex(x => x.NormalizedName)
-            .IsUnique()
-            .HasFilter("\"Deleted\" = false");
     }
 }
