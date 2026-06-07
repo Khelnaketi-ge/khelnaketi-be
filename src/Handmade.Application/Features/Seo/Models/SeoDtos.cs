@@ -12,6 +12,10 @@ public sealed record SeoCategorySummaryDto(
     string Name,
     string Slug);
 
+public sealed record SeoBreadcrumbDto(
+    string Label,
+    string Href);
+
 public sealed record ProductSeoDto(
     int Id,
     SeoBrandSummaryDto Brand,
@@ -19,6 +23,7 @@ public sealed record ProductSeoDto(
     string Title,
     string Slug,
     string CanonicalPath,
+    IReadOnlyDictionary<string, string> LocalizedPaths,
     string? ShortDescription,
     string? Description,
     decimal? Price,
@@ -33,6 +38,8 @@ public sealed record CategorySeoDto(
     string Name,
     string Slug,
     string CanonicalPath,
+    IReadOnlyCollection<SeoBreadcrumbDto> Breadcrumbs,
+    IReadOnlyDictionary<string, string> LocalizedPaths,
     DateTimeOffset UpdatedAt);
 
 public sealed record BrandSeoDto(

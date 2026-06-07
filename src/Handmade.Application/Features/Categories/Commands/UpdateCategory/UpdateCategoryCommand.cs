@@ -31,12 +31,21 @@ public sealed class UpdateCategoryCommandHandler(IApplicationDbContext context)
         category.Translations.Clear();
         foreach (var input in request.Translations)
         {
+            var languageCode = LanguageCodes.Normalize(input.LanguageCode);
+            var slug = await SlugGenerator.GenerateUniqueAsync(
+                context.CategoryTranslations
+                    .Where(x => x.LanguageCode == languageCode && x.CategoryId != category.Id)
+                    .Select(x => x.Slug),
+                input.Name,
+                200,
+                cancellationToken);
+
             category.Translations.Add(new CategoryTranslation
             {
                 CategoryId = category.Id,
-                LanguageCode = LanguageCodes.Normalize(input.LanguageCode),
+                LanguageCode = languageCode,
                 Name = input.Name.Trim(),
-                Slug = SlugGenerator.GenerateForEntity(input.Name, "c", category.Id, 200)
+                Slug = slug
             });
         }
 

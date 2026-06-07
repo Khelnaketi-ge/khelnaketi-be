@@ -1,4 +1,7 @@
 using Asp.Versioning;
+using System.Globalization;
+using Handmade.Application.Common.Exceptions;
+using Handmade.Application.Common.Models.Auth;
 using Handmade.Application.Features.Auth.Commands.Login;
 using Handmade.Application.Features.Auth.Commands.Refresh;
 using Handmade.Application.Features.Auth.Commands.Register;
@@ -12,6 +15,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace Handmade.WebApi.Controllers;
 
@@ -21,6 +25,9 @@ public class AuthController(
     ISender sender,
     IGoogleAuthService googleAuthService) : ApiController(sender)
 {
+    private const string DefaultFrontendReturnUrl = "http://localhost:3000/ka/auth/google/callback";
+    private const string GeneralGoogleAuthError = "InvalidExternalLogin";
+
     [HttpPost("register")]
     [EnableRateLimiting(RateLimiterPolicies.AuthEmail)]
     public async Task<IActionResult> Register([FromBody] RegisterCommand command, CancellationToken cancellationToken)
@@ -74,10 +81,12 @@ public class AuthController(
     }
 
     [HttpGet("external/google")]
-    public IActionResult Google()
+    public IActionResult Google([FromQuery] string? returnUrl)
     {
         var redirectUrl = Url.ActionLink(nameof(GoogleCallback));
-        var properties = googleAuthService.CreateChallengeProperties(redirectUrl);
+        var properties = googleAuthService.CreateChallengeProperties(
+            redirectUrl,
+            NormalizeFrontendReturnUrl(returnUrl));
 
         return Challenge(properties, GoogleDefaults.AuthenticationScheme);
     }
@@ -85,16 +94,58 @@ public class AuthController(
     [HttpGet("external/google/callback")]
     public async Task<IActionResult> GoogleCallback()
     {
-        var tokens = await googleAuthService.HandleCallbackAsync(requireBrandOwner: false, HttpContext.RequestAborted);
-
-        if (tokens is null)
+        try
         {
-            return Unauthorized(new
+            var tokens = await googleAuthService.HandleCallbackAsync(requireBrandOwner: false, HttpContext.RequestAborted);
+
+            return tokens is null ? RedirectWithError() : RedirectWithTokens(tokens);
+        }
+        catch (UnauthorizedException exception)
+        {
+            return RedirectWithError(exception.Code, exception.Message);
+        }
+    }
+
+    private RedirectResult RedirectWithError(string? code = null, string? detail = null)
+    {
+        var returnUrl = NormalizeFrontendReturnUrl(googleAuthService.GetReturnUrl());
+        var redirectUrl = QueryHelpers.AddQueryString(
+            returnUrl,
+            new Dictionary<string, string?>
             {
-                message = "Google authentication failed"
+                ["error"] = string.IsNullOrWhiteSpace(code) ? GeneralGoogleAuthError : code,
+                ["message"] = string.IsNullOrWhiteSpace(detail) ? "Invalid external login" : detail
             });
+
+        return Redirect(redirectUrl);
+    }
+
+    private RedirectResult RedirectWithTokens(TokensModel tokens)
+    {
+        var returnUrl = NormalizeFrontendReturnUrl(googleAuthService.GetReturnUrl());
+        var redirectUrl = QueryHelpers.AddQueryString(
+            returnUrl,
+            new Dictionary<string, string?>
+            {
+                ["accessToken"] = tokens.AccessToken,
+                ["accessTokenExpiresAt"] = tokens.AccessTokenExpiresAt.ToString("O", CultureInfo.InvariantCulture),
+                ["refreshToken"] = tokens.RefreshToken,
+                ["refreshTokenExpiresAt"] = tokens.RefreshTokenExpiresAt.ToString("O", CultureInfo.InvariantCulture)
+            });
+
+        return Redirect(redirectUrl);
+    }
+
+    private static string NormalizeFrontendReturnUrl(string? returnUrl)
+    {
+        if (!Uri.TryCreate(returnUrl, UriKind.Absolute, out var uri)
+            || uri.Host != "localhost"
+            || uri.Port is not (3000 or 3002)
+            || uri.Scheme is not ("http" or "https"))
+        {
+            return DefaultFrontendReturnUrl;
         }
 
-        return Ok(tokens);
+        return uri.ToString();
     }
 }

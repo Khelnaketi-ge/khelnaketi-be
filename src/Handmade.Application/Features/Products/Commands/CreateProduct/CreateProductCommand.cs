@@ -166,7 +166,12 @@ public sealed class CreateProductCommandHandler(
 
             scope.Context.Parameters[nameof(IImageStorageService)] = imageStorage;
 
-            return mapper.Map<ProductDto>(product);
+            var mappedProduct = await context.Products
+                .AsNoTracking()
+                .IncludeProductDtoGraph()
+                .SingleAsync(x => x.Id == product.Id, cancellationToken);
+
+            return mapper.Map<ProductDto>(mappedProduct);
         }
         catch
         {

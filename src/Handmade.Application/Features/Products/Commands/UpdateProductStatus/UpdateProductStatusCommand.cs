@@ -19,14 +19,7 @@ public sealed class UpdateProductStatusCommandHandler(
     public async Task<ProductDto> Handle(UpdateProductStatusCommand request, CancellationToken cancellationToken)
     {
         var product = await context.Products
-            .Include(x => x.Brand)
-            .Include(x => x.Category)
-            .Include(x => x.Images)
-                .ThenInclude(x => x.Image)
-            .Include(x => x.AttributeValues)
-                .ThenInclude(x => x.ProductAttribute)
-            .Include(x => x.AttributeValues)
-                .ThenInclude(x => x.AttributeOption)
+            .IncludeProductDtoGraph()
             .SingleOrDefaultAsync(x => x.Id == request.ProductId, cancellationToken);
 
         if (product is null)

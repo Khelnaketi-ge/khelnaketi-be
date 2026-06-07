@@ -7,17 +7,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Handmade.Application.Features.Seo.Queries.GetBrandBySlug;
 
-public sealed record GetBrandBySlugQuery(string LanguageCode, string Slug) : IRequest<BrandSeoDto?>;
+public sealed record GetBrandBySlugQuery(string Slug) : IRequest<BrandSeoDto?>;
 
 public sealed class GetBrandBySlugQueryHandler(
     IApplicationDbContext context,
-    IImageStorageService imageStorage) : IRequestHandler<GetBrandBySlugQuery, BrandSeoDto?>
+    IImageStorageService imageStorage,
+    ICurrentLanguage currentLanguage) : IRequestHandler<GetBrandBySlugQuery, BrandSeoDto?>
 {
     public async Task<BrandSeoDto?> Handle(GetBrandBySlugQuery request, CancellationToken cancellationToken)
     {
         var slug = request.Slug.Trim();
 
-        var languageCode = LanguageCodes.Normalize(request.LanguageCode);
+        var languageCode = currentLanguage.Code;
 
         var item = await context.Brands
             .AsNoTracking()

@@ -101,6 +101,7 @@ public static class DependencyInjection
         // Current User
         builder.Services.AddScoped<ICurrentUser, CurrentUser>();
         builder.Services.AddScoped<ICurrentRequest, CurrentRequest>();
+        builder.Services.AddScoped<ICurrentLanguage, CurrentLanguage>();
         builder.Services.AddScoped<Services.IGoogleAuthService, Services.GoogleAuthService>();
         
         // problem details

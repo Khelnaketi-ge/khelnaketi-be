@@ -15,33 +15,30 @@ namespace Handmade.WebApi.Controllers;
 [Route("api/v{version:apiVersion}/seo")]
 public class SeoController(ISender sender) : ApiController(sender)
 {
-    [HttpGet("products/{languageCode}/{slug}")]
+    [HttpGet("products/{slug}")]
     public async Task<IActionResult> GetProductBySlug(
-        [FromRoute] string languageCode,
         [FromRoute] string slug,
         CancellationToken cancellationToken)
     {
-        var result = await Sender.Send(new GetProductBySlugQuery(languageCode, slug), cancellationToken);
+        var result = await Sender.Send(new GetProductBySlugQuery(slug), cancellationToken);
         return result is null ? NotFound() : Ok(result);
     }
 
-    [HttpGet("categories/{languageCode}/{slug}")]
+    [HttpGet("categories/{slug}")]
     public async Task<IActionResult> GetCategoryBySlug(
-        [FromRoute] string languageCode,
         [FromRoute] string slug,
         CancellationToken cancellationToken)
     {
-        var result = await Sender.Send(new GetCategoryBySlugQuery(languageCode, slug), cancellationToken);
+        var result = await Sender.Send(new GetCategoryBySlugQuery(slug), cancellationToken);
         return result is null ? NotFound() : Ok(result);
     }
 
-    [HttpGet("brands/{languageCode}/{slug}")]
+    [HttpGet("brands/{slug}")]
     public async Task<IActionResult> GetBrandBySlug(
-        [FromRoute] string languageCode,
         [FromRoute] string slug,
         CancellationToken cancellationToken)
     {
-        var result = await Sender.Send(new GetBrandBySlugQuery(languageCode, slug), cancellationToken);
+        var result = await Sender.Send(new GetBrandBySlugQuery(slug), cancellationToken);
         return result is null ? NotFound() : Ok(result);
     }
 

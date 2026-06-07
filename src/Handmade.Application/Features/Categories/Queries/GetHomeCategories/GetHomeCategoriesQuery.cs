@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Handmade.Application.Features.Categories.Queries.GetHomeCategories;
 
-public sealed record GetHomeCategoriesQuery(string LanguageCode = LanguageCodes.Georgian)
+public sealed record GetHomeCategoriesQuery
     : IRequest<IReadOnlyCollection<HomeCategoryDto>>;
 
 public sealed record HomeCategoryDto(
@@ -22,16 +22,15 @@ public sealed record HomeCategoryDto(
 
 public sealed class GetHomeCategoriesQueryHandler(
     IApplicationDbContext context,
-    IImageStorageService imageStorage)
+    IImageStorageService imageStorage,
+    ICurrentLanguage currentLanguage)
     : IRequestHandler<GetHomeCategoriesQuery, IReadOnlyCollection<HomeCategoryDto>>
 {
     public async Task<IReadOnlyCollection<HomeCategoryDto>> Handle(
         GetHomeCategoriesQuery request,
         CancellationToken cancellationToken)
     {
-        var languageCode = LanguageCodes.IsSupported(request.LanguageCode)
-            ? LanguageCodes.Normalize(request.LanguageCode)
-            : LanguageCodes.Georgian;
+        var languageCode = currentLanguage.Code;
 
         var homeCategories = await context.HomeCategories
             .AsNoTracking()

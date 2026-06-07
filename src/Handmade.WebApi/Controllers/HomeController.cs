@@ -12,9 +12,8 @@ public class HomeController(ISender sender) : ApiController(sender)
 {
     [HttpGet("popular-categories")]
     public async Task<IActionResult> GetPopularCategories(
-        CancellationToken cancellationToken,
-        [FromQuery] string languageCode = "ka")
+        CancellationToken cancellationToken)
     {
-        return Ok(await Sender.Send(new GetHomeCategoriesQuery(languageCode), cancellationToken));
+        return Ok(await Sender.Send(new GetHomeCategoriesQuery(), cancellationToken));
     }
 }

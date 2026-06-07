@@ -8,17 +8,18 @@ using System.Text.RegularExpressions;
 
 namespace Handmade.Application.Features.Seo.Queries.GetProductBySlug;
 
-public sealed record GetProductBySlugQuery(string LanguageCode, string Slug) : IRequest<ProductSeoDto?>;
+public sealed record GetProductBySlugQuery(string Slug) : IRequest<ProductSeoDto?>;
 
 public sealed class GetProductBySlugQueryHandler(
     IApplicationDbContext context,
-    IImageStorageService imageStorage) : IRequestHandler<GetProductBySlugQuery, ProductSeoDto?>
+    IImageStorageService imageStorage,
+    ICurrentLanguage currentLanguage) : IRequestHandler<GetProductBySlugQuery, ProductSeoDto?>
 {
     private static readonly Regex ProductSlugWithIdRegex = new(@"^(?<slug>.+)-p(?<id>\d+)$", RegexOptions.Compiled);
 
     public async Task<ProductSeoDto?> Handle(GetProductBySlugQuery request, CancellationToken cancellationToken)
     {
-        var languageCode = LanguageCodes.Normalize(request.LanguageCode);
+        var languageCode = currentLanguage.Code;
         var slug = request.Slug.Trim();
 
         var match = ProductSlugWithIdRegex.Match(slug);
@@ -41,6 +42,9 @@ public sealed class GetProductBySlugQueryHandler(
                     .Where(t => t.LanguageCode == languageCode)
                     .Select(t => new { t.Title, t.Slug, t.ShortDescription, t.Description })
                     .FirstOrDefault(),
+                ProductTranslations = x.Translations
+                    .Select(t => new { t.LanguageCode, t.Slug })
+                    .ToList(),
                 Brand = new
                 {
                     x.Brand.Id,
@@ -53,7 +57,10 @@ public sealed class GetProductBySlugQueryHandler(
                     Translation = x.Category.Translations
                         .Where(t => t.LanguageCode == languageCode)
                         .Select(t => new { t.Name, t.Slug })
-                        .FirstOrDefault()
+                        .FirstOrDefault(),
+                    Translations = x.Category.Translations
+                        .Select(t => new { t.LanguageCode, t.Slug })
+                        .ToList()
                 },
                 PrimaryImageObjectKey = x.Images
                     .OrderByDescending(image => image.IsPrimary)
@@ -66,10 +73,17 @@ public sealed class GetProductBySlugQueryHandler(
         var translation = item?.ProductTranslation;
         var categoryTranslation = item?.Category.Translation;
 
-        if (item is null || translation is null || categoryTranslation is null || translation.Slug != slug)
+        if (item is null || translation is null || categoryTranslation is null)
         {
             return null;
         }
+
+        var categorySlugsByLanguage = item.Category.Translations.ToDictionary(x => x.LanguageCode, x => x.Slug);
+        var localizedPaths = item.ProductTranslations
+            .Where(x => categorySlugsByLanguage.ContainsKey(x.LanguageCode))
+            .ToDictionary(
+                x => x.LanguageCode,
+                x => $"/{x.LanguageCode}/{categorySlugsByLanguage[x.LanguageCode]}/{x.Slug}");
 
         return new ProductSeoDto(
             item.Id,
@@ -77,7 +91,8 @@ public sealed class GetProductBySlugQueryHandler(
             new SeoCategorySummaryDto(item.Category.Id, categoryTranslation.Name, categoryTranslation.Slug),
             translation.Title,
             translation.Slug,
-            $"/{languageCode}/products/{translation.Slug}",
+            $"/{languageCode}/{categoryTranslation.Slug}/{translation.Slug}",
+            localizedPaths,
             translation.ShortDescription,
             translation.Description,
             item.Price,

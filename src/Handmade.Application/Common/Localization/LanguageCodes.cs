@@ -5,6 +5,7 @@ public static class LanguageCodes
     public const string Georgian = "ka";
     public const string English = "en";
     public const string Russian = "ru";
+    public const string Default = Georgian;
 
     public static readonly IReadOnlySet<string> Supported = new HashSet<string>
     {
@@ -18,4 +19,15 @@ public static class LanguageCodes
 
     public static bool IsSupported(string languageCode) =>
         Supported.Contains(Normalize(languageCode));
+
+    public static string GetSupportedOrDefault(string? languageCode)
+    {
+        if (string.IsNullOrWhiteSpace(languageCode))
+        {
+            return Default;
+        }
+
+        var normalized = Normalize(languageCode);
+        return Supported.Contains(normalized) ? normalized : Default;
+    }
 }
