@@ -41,7 +41,8 @@ public class ProductsController(ISender sender) : ApiController(sender)
         [FromQuery] string[] category,
         [FromQuery] string[] brand,
         [FromQuery] string[] attribute,
-        CancellationToken cancellationToken)
+        [FromQuery] CatalogProductSort sortBy = CatalogProductSort.Newest,
+        CancellationToken cancellationToken = default)
     {
         return Ok(await Sender.Send(
             new GetCatalogProductsQuery(new CatalogProductFilters(
@@ -50,7 +51,8 @@ public class ProductsController(ISender sender) : ApiController(sender)
                 maxPrice,
                 category,
                 brand,
-                attribute)),
+                attribute,
+                sortBy)),
             cancellationToken));
     }
 

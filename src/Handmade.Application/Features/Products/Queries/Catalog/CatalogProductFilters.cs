@@ -6,12 +6,19 @@ public sealed record CatalogProductFilters(
     decimal? MaxPrice,
     IReadOnlyCollection<string> Categories,
     IReadOnlyCollection<string> Brands,
-    IReadOnlyCollection<string> Attributes);
+    IReadOnlyCollection<string> Attributes,
+    CatalogProductSort SortBy = CatalogProductSort.Newest);
 
 public sealed record CatalogFilterOptionDto(
     string Label,
     string Value,
     int Count);
+
+public sealed record CatalogCategoryFilterDto(
+    string Label,
+    string Value,
+    int Count,
+    IReadOnlyCollection<CatalogCategoryFilterDto> Children);
 
 public sealed record CatalogAttributeFilterDto(
     string Label,
@@ -21,6 +28,6 @@ public sealed record CatalogAttributeFilterDto(
 public sealed record CatalogFiltersDto(
     decimal? MinPrice,
     decimal? MaxPrice,
-    IReadOnlyCollection<CatalogFilterOptionDto> Categories,
+    IReadOnlyCollection<CatalogCategoryFilterDto> Categories,
     IReadOnlyCollection<CatalogAttributeFilterDto> Attributes,
     IReadOnlyCollection<CatalogFilterOptionDto> Brands);

@@ -26,6 +26,12 @@ public sealed class UpdateBrandContactsCommandHandlerValidation : AbstractValida
             .Must(x => x.Count(phoneNumber => phoneNumber.IsPrimary && phoneNumber.IsActive) <= 1)
             .WithMessage("Only one active primary phone number is allowed");
 
+        RuleFor(x => x.PhoneNumbers)
+            .Must(phoneNumbers => HaveNoDuplicates(
+                phoneNumbers,
+                phoneNumber => NormalizePhoneNumber(phoneNumber.PhoneNumber)))
+            .WithMessage("Phone numbers must be unique");
+
         RuleFor(x => x.EmailAddresses)
             .NotNull().WithMessage("Email addresses are required");
 
@@ -43,6 +49,12 @@ public sealed class UpdateBrandContactsCommandHandlerValidation : AbstractValida
         RuleFor(x => x.EmailAddresses)
             .Must(x => x.Count(emailAddress => emailAddress.IsPrimary && emailAddress.IsActive) <= 1)
             .WithMessage("Only one active primary email address is allowed");
+
+        RuleFor(x => x.EmailAddresses)
+            .Must(emailAddresses => HaveNoDuplicates(
+                emailAddresses,
+                emailAddress => emailAddress.Email.Trim().ToUpperInvariant()))
+            .WithMessage("Email addresses must be unique");
 
         RuleFor(x => x.Addresses)
             .NotNull().WithMessage("Addresses are required");
@@ -78,4 +90,24 @@ public sealed class UpdateBrandContactsCommandHandlerValidation : AbstractValida
             .Must(x => x.Count(address => address.IsPrimary && address.IsActive) <= 1)
             .WithMessage("Only one active primary address is allowed");
     }
+
+    private static bool HaveNoDuplicates<T>(
+        IReadOnlyCollection<T>? values,
+        Func<T, string> normalize)
+    {
+        if (values is null)
+        {
+            return true;
+        }
+
+        var normalizedValues = values
+            .Select(normalize)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToList();
+
+        return normalizedValues.Distinct().Count() == normalizedValues.Count;
+    }
+
+    private static string NormalizePhoneNumber(string phoneNumber) =>
+        new(phoneNumber.Where(char.IsDigit).ToArray());
 }

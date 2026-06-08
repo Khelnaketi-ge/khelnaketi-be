@@ -26,11 +26,12 @@ public sealed class GetCatalogProductsQueryHandler(
             languageCode,
             cancellationToken);
 
-        var products = await query
+        var productCardsQuery = query
             .Select(x => new
             {
                 x.Id,
                 x.Price,
+                x.Created,
                 x.IsInStock,
                 Translation = x.Translations
                     .Where(t => t.LanguageCode == languageCode)
@@ -45,8 +46,24 @@ public sealed class GetCatalogProductsQueryHandler(
                     .ThenBy(image => image.Order)
                     .Select(image => image.Image.ObjectKey)
                     .FirstOrDefault()
-            })
-            .OrderByDescending(x => x.Id)
+            });
+
+        productCardsQuery = request.Filters.SortBy switch
+        {
+            CatalogProductSort.PriceAscending => productCardsQuery
+                .OrderBy(x => x.Price == null)
+                .ThenBy(x => x.Price)
+                .ThenByDescending(x => x.Created),
+            CatalogProductSort.PriceDescending => productCardsQuery
+                .OrderBy(x => x.Price == null)
+                .ThenByDescending(x => x.Price)
+                .ThenByDescending(x => x.Created),
+            _ => productCardsQuery
+                .OrderByDescending(x => x.Created)
+                .ThenByDescending(x => x.Id)
+        };
+
+        var products = await productCardsQuery
             .ToListAsync(cancellationToken);
 
         return products

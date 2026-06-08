@@ -13,6 +13,13 @@ public sealed class GetCatalogFiltersQueryHandler(
     ICurrentLanguage currentLanguage)
     : IRequestHandler<GetCatalogFiltersQuery, CatalogFiltersDto>
 {
+    private sealed record CategoryFilterRow(
+        int Id,
+        int? ParentId,
+        string Name,
+        string Slug,
+        int Count);
+
     public async Task<CatalogFiltersDto> Handle(
         GetCatalogFiltersQuery request,
         CancellationToken cancellationToken)
@@ -49,24 +56,32 @@ public sealed class GetCatalogFiltersQueryHandler(
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        var categoryRows = await categoryQuery
+        var categoryProductCounts = await categoryQuery
             .GroupBy(x => x.CategoryId)
             .Select(x => new { CategoryId = x.Key, Count = x.Count() })
-            .Join(
-                context.CategoryTranslations.AsNoTracking().Where(x => x.LanguageCode == languageCode),
-                count => count.CategoryId,
-                translation => translation.CategoryId,
-                (count, translation) => new
-                {
-                    translation.Name,
-                    translation.Slug,
-                    count.Count
-                })
-            .OrderBy(x => x.Name)
             .ToListAsync(cancellationToken);
-        var categories = categoryRows
-            .Select(x => new CatalogFilterOptionDto(x.Name, x.Slug, x.Count))
-            .ToList();
+        var countByCategoryId = categoryProductCounts.ToDictionary(x => x.CategoryId, x => x.Count);
+        var categoryRows = await context.Categories
+            .AsNoTracking()
+            .Select(x => new
+            {
+                x.Id,
+                x.ParentId,
+                Translation = x.Translations
+                    .Where(t => t.LanguageCode == languageCode)
+                    .Select(t => new { t.Name, t.Slug })
+                    .FirstOrDefault()
+            })
+            .ToListAsync(cancellationToken);
+        var categories = BuildCategoryTree(categoryRows
+            .Where(x => x.Translation is not null)
+            .Select(x => new CategoryFilterRow(
+                x.Id,
+                x.ParentId,
+                x.Translation!.Name,
+                x.Translation.Slug,
+                countByCategoryId.GetValueOrDefault(x.Id)))
+            .ToList());
 
         var brandRows = await brandQuery
             .GroupBy(x => x.BrandId)
@@ -169,5 +184,46 @@ public sealed class GetCatalogFiltersQueryHandler(
             categories,
             attributeFilters,
             brands);
+    }
+
+    private static IReadOnlyCollection<CatalogCategoryFilterDto> BuildCategoryTree(
+        IReadOnlyCollection<CategoryFilterRow> rows)
+    {
+        var rootRows = rows
+            .Where(x => x.ParentId is null)
+            .OrderBy(x => x.Name)
+            .ToList();
+        var rowsByParentId = rows
+            .Where(x => x.ParentId is not null)
+            .GroupBy(x => x.ParentId!.Value)
+            .ToDictionary(
+                x => x.Key,
+                x => x.OrderBy(row => row.Name).ToList());
+
+        IReadOnlyCollection<CatalogCategoryFilterDto> BuildRows(
+            IReadOnlyCollection<CategoryFilterRow> childRows)
+        {
+            return childRows
+                .Select(child =>
+                {
+                    var childCategories = rowsByParentId.TryGetValue(child.Id, out var rowsForParent)
+                        ? BuildRows(rowsForParent)
+                        : [];
+                    var count = child.Count + childCategories.Sum(x => x.Count);
+
+                    return count > 0
+                        ? new CatalogCategoryFilterDto(
+                            child.Name,
+                            child.Slug,
+                            count,
+                            childCategories)
+                        : null;
+                })
+                .Where(x => x is not null)
+                .Select(x => x!)
+                .ToList();
+        }
+
+        return BuildRows(rootRows);
     }
 }

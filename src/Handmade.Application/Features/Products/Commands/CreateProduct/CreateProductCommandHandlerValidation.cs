@@ -1,12 +1,16 @@
 using FluentValidation;
 using Handmade.Application.Common.Localization;
+using Handmade.Application.Interfaces;
 using Handmade.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace Handmade.Application.Features.Products.Commands.CreateProduct;
 
 public sealed class CreateProductCommandHandlerValidation : AbstractValidator<CreateProductCommand>
 {
-    public CreateProductCommandHandlerValidation()
+    public CreateProductCommandHandlerValidation(
+        IApplicationDbContext context,
+        ICurrentUser currentUser)
     {
         RuleFor(x => x.CategoryId)
             .GreaterThan(0).WithMessage("Category is required");
@@ -14,7 +18,10 @@ public sealed class CreateProductCommandHandlerValidation : AbstractValidator<Cr
         TranslationValidation.ValidateProductTranslations(RuleFor(x => x.Translations));
 
         RuleFor(x => x.Sku)
-            .MaximumLength(80).WithMessage("SKU is too long");
+            .MaximumLength(80).WithMessage("SKU is too long")
+            .MustAsync(async (command, sku, cancellationToken) =>
+                !await SkuExistsAsync(context, currentUser, command, sku, cancellationToken))
+            .WithMessage("This SKU already exists");
 
         RuleFor(x => x.Price)
             .GreaterThanOrEqualTo(0).When(x => x.Price.HasValue).WithMessage("Price cannot be negative");
@@ -41,4 +48,39 @@ public sealed class CreateProductCommandHandlerValidation : AbstractValidator<Cr
                     .LessThanOrEqualTo(10 * 1024 * 1024).WithMessage("Image size must be 10 MB or less");
             });
     }
+
+    private static async Task<bool> SkuExistsAsync(
+        IApplicationDbContext context,
+        ICurrentUser currentUser,
+        CreateProductCommand command,
+        string? sku,
+        CancellationToken cancellationToken)
+    {
+        var normalizedSku = NormalizeOptional(sku);
+
+        if (normalizedSku is null || currentUser.Id is null)
+        {
+            return false;
+        }
+
+        var currentUserAccessLevel = await context.Users
+            .Where(x => x.Id == currentUser.Id.Value)
+            .Select(x => x.AccessLevel)
+            .SingleOrDefaultAsync(cancellationToken);
+        var isSuperAdmin = currentUserAccessLevel == AccessLevel.SuperAdmin;
+        var brandId = command.BrandId.HasValue && isSuperAdmin
+            ? command.BrandId.Value
+            : await context.Brands
+                .Where(x => x.OwnerUserId == currentUser.Id.Value)
+                .Select(x => (int?)x.Id)
+                .SingleOrDefaultAsync(cancellationToken);
+
+        return brandId.HasValue
+            && await context.Products.AnyAsync(
+                x => x.BrandId == brandId.Value && x.Sku == normalizedSku,
+                cancellationToken);
+    }
+
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
