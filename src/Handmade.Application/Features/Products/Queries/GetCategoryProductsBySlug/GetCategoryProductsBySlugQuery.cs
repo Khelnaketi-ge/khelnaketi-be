@@ -58,6 +58,12 @@ public sealed class GetCategoryProductsBySlugQueryHandler(
             {
                 x.Id,
                 x.Price,
+                EffectivePrice = x.DiscountPrice ?? (x.DiscountPercent.HasValue && x.Price.HasValue
+                    ? x.Price.Value - x.Price.Value * x.DiscountPercent.Value / 100
+                    : x.Price),
+                EffectiveDiscountPercent = x.DiscountPercent ?? (x.DiscountPrice.HasValue && x.Price.HasValue && x.Price.Value > 0
+                    ? (x.Price.Value - x.DiscountPrice.Value) / x.Price.Value * 100
+                    : (decimal?)null),
                 x.IsInStock,
                 Translation = x.Translations
                     .Where(t => t.LanguageCode == languageCode)
@@ -67,11 +73,11 @@ public sealed class GetCategoryProductsBySlugQueryHandler(
                     .Where(t => t.LanguageCode == languageCode)
                     .Select(t => new { t.Slug })
                     .FirstOrDefault(),
-                PrimaryImageObjectKey = x.Images
+                ImageObjectKeys = x.Images
                     .OrderByDescending(image => image.IsPrimary)
                     .ThenBy(image => image.Order)
                     .Select(image => image.Image.ObjectKey)
-                    .FirstOrDefault()
+                    .ToList()
             })
             .OrderByDescending(x => x.Id)
             .ToListAsync(cancellationToken);
@@ -84,8 +90,16 @@ public sealed class GetCategoryProductsBySlugQueryHandler(
                 x.Translation.Slug,
                 $"/{languageCode}/{x.CategoryTranslation!.Slug}/{x.Translation.Slug}",
                 x.Price,
+                x.EffectivePrice != x.Price ? x.EffectivePrice : null,
+                x.EffectiveDiscountPercent,
                 x.IsInStock,
-                x.PrimaryImageObjectKey is null ? null : imageStorage.GetPublicUrl(x.PrimaryImageObjectKey)))
+                x.ImageObjectKeys.FirstOrDefault() is string primaryImageObjectKey
+                    ? imageStorage.GetPublicUrl(primaryImageObjectKey)
+                    : null,
+                x.ImageObjectKeys
+                    .Select(imageStorage.GetPublicUrl)
+                    .OfType<string>()
+                    .ToList()))
             .ToList();
     }
 

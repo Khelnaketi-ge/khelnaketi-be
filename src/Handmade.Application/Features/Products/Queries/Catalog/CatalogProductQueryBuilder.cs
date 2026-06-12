@@ -30,14 +30,25 @@ internal static class CatalogProductQueryBuilder
                 && EF.Functions.Like(t.Title.ToLower(), $"%{normalizedSearch}%")));
         }
 
+        if (filters.Discounted)
+        {
+            query = query.Where(x => x.Price.HasValue && (x.DiscountPrice.HasValue || x.DiscountPercent.HasValue));
+        }
+
         if (filters.MinPrice is decimal minPrice)
         {
-            query = query.Where(x => x.Price >= minPrice);
+            query = query.Where(x =>
+                (x.DiscountPrice ?? (x.DiscountPercent.HasValue && x.Price.HasValue
+                    ? x.Price.Value - x.Price.Value * x.DiscountPercent.Value / 100
+                    : x.Price)) >= minPrice);
         }
 
         if (filters.MaxPrice is decimal maxPrice)
         {
-            query = query.Where(x => x.Price <= maxPrice);
+            query = query.Where(x =>
+                (x.DiscountPrice ?? (x.DiscountPercent.HasValue && x.Price.HasValue
+                    ? x.Price.Value - x.Price.Value * x.DiscountPercent.Value / 100
+                    : x.Price)) <= maxPrice);
         }
 
         var categorySlugs = Normalize(filters.Categories);

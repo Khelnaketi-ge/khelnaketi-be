@@ -41,6 +41,7 @@ public class ProductsController(ISender sender) : ApiController(sender)
         [FromQuery] string[] category,
         [FromQuery] string[] brand,
         [FromQuery] string[] attribute,
+        [FromQuery] bool discounted = false,
         [FromQuery] CatalogProductSort sortBy = CatalogProductSort.Newest,
         CancellationToken cancellationToken = default)
     {
@@ -52,6 +53,7 @@ public class ProductsController(ISender sender) : ApiController(sender)
                 category,
                 brand,
                 attribute,
+                discounted,
                 sortBy)),
             cancellationToken));
     }
@@ -64,7 +66,8 @@ public class ProductsController(ISender sender) : ApiController(sender)
         [FromQuery] string[] category,
         [FromQuery] string[] brand,
         [FromQuery] string[] attribute,
-        CancellationToken cancellationToken)
+        [FromQuery] bool discounted = false,
+        CancellationToken cancellationToken = default)
     {
         return Ok(await Sender.Send(
             new GetCatalogFiltersQuery(new CatalogProductFilters(
@@ -73,7 +76,8 @@ public class ProductsController(ISender sender) : ApiController(sender)
                 maxPrice,
                 category,
                 brand,
-                attribute)),
+                attribute,
+                discounted)),
             cancellationToken));
     }
 

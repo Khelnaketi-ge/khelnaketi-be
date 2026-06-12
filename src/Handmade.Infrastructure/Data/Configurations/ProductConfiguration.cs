@@ -22,6 +22,12 @@ internal class ProductConfiguration : BaseAuditableEntityConfiguration<Product>
         builder.Property(x => x.Price)
             .HasPrecision(18, 2);
 
+        builder.Property(x => x.DiscountPrice)
+            .HasPrecision(18, 2);
+
+        builder.Property(x => x.DiscountPercent)
+            .HasPrecision(5, 2);
+
         builder.Property(x => x.IsInStock)
             .HasDefaultValue(false);
 

@@ -6,5 +6,8 @@ public sealed record CategoryProductCardDto(
     string Slug,
     string CanonicalPath,
     decimal? Price,
+    decimal? DiscountPrice,
+    decimal? DiscountPercent,
     bool IsInStock,
-    string? PrimaryImageUrl);
+    string? PrimaryImageUrl,
+    IReadOnlyCollection<string> ImageUrls);

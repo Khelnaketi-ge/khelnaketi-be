@@ -4,5 +4,6 @@ public enum CatalogProductSort
 {
     Newest,
     PriceAscending,
-    PriceDescending
+    PriceDescending,
+    DiscountDescending
 }

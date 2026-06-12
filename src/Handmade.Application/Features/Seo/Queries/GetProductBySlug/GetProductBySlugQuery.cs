@@ -35,6 +35,12 @@ public sealed class GetProductBySlugQueryHandler(
             {
                 x.Id,
                 x.Price,
+                EffectivePrice = x.DiscountPrice ?? (x.DiscountPercent.HasValue && x.Price.HasValue
+                    ? x.Price.Value - x.Price.Value * x.DiscountPercent.Value / 100
+                    : x.Price),
+                EffectiveDiscountPercent = x.DiscountPercent ?? (x.DiscountPrice.HasValue && x.Price.HasValue && x.Price.Value > 0
+                    ? (x.Price.Value - x.DiscountPrice.Value) / x.Price.Value * 100
+                    : (decimal?)null),
                 x.IsInStock,
                 x.Status,
                 UpdatedAt = x.Updated ?? x.Created,
@@ -96,6 +102,8 @@ public sealed class GetProductBySlugQueryHandler(
             translation.ShortDescription,
             translation.Description,
             item.Price,
+            item.EffectivePrice != item.Price ? item.EffectivePrice : null,
+            item.EffectiveDiscountPercent,
             item.IsInStock,
             item.Status,
             item.PrimaryImageObjectKey is null ? null : imageStorage.GetPublicUrl(item.PrimaryImageObjectKey),

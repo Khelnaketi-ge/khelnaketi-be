@@ -26,6 +26,22 @@ public sealed class CreateProductCommandHandlerValidation : AbstractValidator<Cr
         RuleFor(x => x.Price)
             .GreaterThanOrEqualTo(0).When(x => x.Price.HasValue).WithMessage("Price cannot be negative");
 
+        RuleFor(x => x.DiscountPrice)
+            .GreaterThanOrEqualTo(0).When(x => x.DiscountPrice.HasValue).WithMessage("Discount price cannot be negative")
+            .LessThan(x => x.Price).When(x => x.DiscountPrice.HasValue && x.Price.HasValue).WithMessage("Discount price must be lower than price");
+
+        RuleFor(x => x.DiscountPercent)
+            .GreaterThanOrEqualTo(0).When(x => x.DiscountPercent.HasValue).WithMessage("Discount percent cannot be negative")
+            .LessThanOrEqualTo(100).When(x => x.DiscountPercent.HasValue).WithMessage("Discount percent cannot be greater than 100");
+
+        RuleFor(x => x)
+            .Must(x => !(x.DiscountPrice.HasValue && x.DiscountPercent.HasValue))
+            .WithMessage("Use either discount price or discount percent");
+
+        RuleFor(x => x)
+            .Must(x => x.Price.HasValue || (!x.DiscountPrice.HasValue && !x.DiscountPercent.HasValue))
+            .WithMessage("Price is required when discount is set");
+
         RuleFor(x => x.Status)
             .IsInEnum().WithMessage("Product status is invalid")
             .Must(x => x is ProductStatus.Draft or ProductStatus.Active or ProductStatus.Archived)

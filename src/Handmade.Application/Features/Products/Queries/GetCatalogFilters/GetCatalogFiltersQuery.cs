@@ -51,8 +51,12 @@ public sealed class GetCatalogFiltersQueryHandler(
             .GroupBy(_ => 1)
             .Select(x => new
             {
-                Min = x.Min(product => product.Price),
-                Max = x.Max(product => product.Price)
+                Min = x.Min(product => product.DiscountPrice ?? (product.DiscountPercent.HasValue && product.Price.HasValue
+                    ? product.Price.Value - product.Price.Value * product.DiscountPercent.Value / 100
+                    : product.Price)),
+                Max = x.Max(product => product.DiscountPrice ?? (product.DiscountPercent.HasValue && product.Price.HasValue
+                    ? product.Price.Value - product.Price.Value * product.DiscountPercent.Value / 100
+                    : product.Price))
             })
             .FirstOrDefaultAsync(cancellationToken);
 

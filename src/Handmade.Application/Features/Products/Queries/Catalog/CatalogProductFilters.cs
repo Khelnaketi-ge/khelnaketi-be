@@ -7,6 +7,7 @@ public sealed record CatalogProductFilters(
     IReadOnlyCollection<string> Categories,
     IReadOnlyCollection<string> Brands,
     IReadOnlyCollection<string> Attributes,
+    bool Discounted = false,
     CatalogProductSort SortBy = CatalogProductSort.Newest);
 
 public sealed record CatalogFilterOptionDto(

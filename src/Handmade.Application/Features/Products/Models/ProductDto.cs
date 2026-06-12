@@ -17,6 +17,8 @@ public sealed class ProductDto : IMapFrom<Product>
     public string? Description { get; set; }
     public string? Sku { get; set; }
     public decimal? Price { get; set; }
+    public decimal? DiscountPrice { get; set; }
+    public decimal? DiscountPercent { get; set; }
     public bool IsInStock { get; set; }
     public ProductStatus Status { get; set; }
     public DateTimeOffset Created { get; set; }

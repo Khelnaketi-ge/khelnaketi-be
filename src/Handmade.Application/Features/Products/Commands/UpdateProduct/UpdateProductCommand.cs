@@ -21,6 +21,8 @@ public sealed record UpdateProductCommand(
     int CategoryId,
     string? Sku,
     decimal? Price,
+    decimal? DiscountPrice,
+    decimal? DiscountPercent,
     bool IsInStock,
     ProductStatus Status,
     IReadOnlyCollection<ProductAttributeValueInput>? AttributeValues,
@@ -126,6 +128,8 @@ public sealed class UpdateProductCommandHandler(
 
             product.Sku = NormalizeOptional(request.Sku);
             product.Price = request.Price;
+            product.DiscountPrice = request.DiscountPrice;
+            product.DiscountPercent = request.DiscountPercent;
             product.IsInStock = request.IsInStock;
             product.Status = request.Status;
 

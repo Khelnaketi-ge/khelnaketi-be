@@ -27,6 +27,8 @@ public sealed record ProductSeoDto(
     string? ShortDescription,
     string? Description,
     decimal? Price,
+    decimal? DiscountPrice,
+    decimal? DiscountPercent,
     bool IsInStock,
     ProductStatus Availability,
     string? PrimaryImageUrl,

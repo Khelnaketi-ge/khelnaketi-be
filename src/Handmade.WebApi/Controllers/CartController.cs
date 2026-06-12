@@ -4,6 +4,7 @@ using Handmade.Application.Features.Cart.Commands.ClearCart;
 using Handmade.Application.Features.Cart.Commands.DecrementCartItem;
 using Handmade.Application.Features.Cart.Commands.RemoveCartItem;
 using Handmade.Application.Features.Cart.Queries.GetCartItems;
+using Handmade.Application.Features.Cart.Queries.GetCartSummary;
 using Handmade.Infrastructure.Auth.Policies;
 using Handmade.WebApi.Infrastructure;
 using MediatR;
@@ -21,6 +22,13 @@ public class CartController(ISender sender) : ApiController(sender)
         CancellationToken cancellationToken = default)
     {
         return Ok(await Sender.Send(new GetCartItemsQuery(), cancellationToken));
+    }
+
+    [HttpGet("summary")]
+    public async Task<IActionResult> GetSummary(
+        CancellationToken cancellationToken = default)
+    {
+        return Ok(await Sender.Send(new GetCartSummaryQuery(), cancellationToken));
     }
 
     [HttpPost("items/{productId:int}")]

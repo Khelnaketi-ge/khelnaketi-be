@@ -41,6 +41,12 @@ public sealed class GetCartItemsQueryHandler(
                 x.ProductId,
                 x.Quantity,
                 x.Product.Price,
+                EffectivePrice = x.Product.DiscountPrice ?? (x.Product.DiscountPercent.HasValue && x.Product.Price.HasValue
+                    ? x.Product.Price.Value - x.Product.Price.Value * x.Product.DiscountPercent.Value / 100
+                    : x.Product.Price),
+                EffectiveDiscountPercent = x.Product.DiscountPercent ?? (x.Product.DiscountPrice.HasValue && x.Product.Price.HasValue && x.Product.Price.Value > 0
+                    ? (x.Product.Price.Value - x.Product.DiscountPrice.Value) / x.Product.Price.Value * 100
+                    : (decimal?)null),
                 x.Product.IsInStock,
                 Translation = x.Product.Translations
                     .Where(t => t.LanguageCode == languageCode)
@@ -67,7 +73,9 @@ public sealed class GetCartItemsQueryHandler(
                 x.Translation!.Title,
                 x.Translation.Slug,
                 $"/{languageCode}/{x.CategoryTranslation!.Slug}/{x.Translation.Slug}",
-                x.Price,
+                x.EffectivePrice,
+                x.EffectivePrice != x.Price ? x.Price : null,
+                x.EffectiveDiscountPercent,
                 x.IsInStock,
                 x.PrimaryImageObjectKey is null ? null : imageStorage.GetPublicUrl(x.PrimaryImageObjectKey)))
             .ToList();

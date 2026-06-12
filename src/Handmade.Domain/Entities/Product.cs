@@ -14,6 +14,8 @@ public class Product : BaseAuditableEntity<int>
     public string? Sku { get; set; }
 
     public decimal? Price { get; set; }
+    public decimal? DiscountPrice { get; set; }
+    public decimal? DiscountPercent { get; set; }
     public bool IsInStock { get; set; }
 
     public ProductStatus Status { get; set; } = ProductStatus.Draft;

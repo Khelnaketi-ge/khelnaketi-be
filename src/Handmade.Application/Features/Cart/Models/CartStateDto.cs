@@ -2,6 +2,10 @@ namespace Handmade.Application.Features.Cart.Models;
 
 public sealed record CartStateDto(int ProductId, bool IsInCart);
 
+public sealed record CartSummaryDto(
+    int TotalItems,
+    IReadOnlyCollection<int> ProductIds);
+
 public sealed record CartItemDto(
     int Id,
     int ProductId,
@@ -10,5 +14,7 @@ public sealed record CartItemDto(
     string Slug,
     string CanonicalPath,
     decimal? Price,
+    decimal? OriginalPrice,
+    decimal? DiscountPercent,
     bool IsInStock,
     string? PrimaryImageUrl);

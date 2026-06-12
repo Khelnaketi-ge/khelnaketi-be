@@ -19,6 +19,8 @@ public sealed record CreateProductCommand(
     int CategoryId,
     string? Sku,
     decimal? Price,
+    decimal? DiscountPrice,
+    decimal? DiscountPercent,
     bool IsInStock,
     ProductStatus Status,
     IReadOnlyCollection<ProductAttributeValueInput>? AttributeValues,
@@ -94,6 +96,8 @@ public sealed class CreateProductCommandHandler(
                 Category = category,
                 Sku = NormalizeOptional(request.Sku),
                 Price = request.Price,
+                DiscountPrice = request.DiscountPrice,
+                DiscountPercent = request.DiscountPercent,
                 IsInStock = request.IsInStock,
                 Status = request.Status,
                 AttributeValues = productAttributeValues
