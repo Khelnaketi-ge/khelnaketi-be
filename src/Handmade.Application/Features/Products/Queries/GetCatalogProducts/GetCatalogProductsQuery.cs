@@ -40,7 +40,7 @@ public sealed class GetCatalogProductsQueryHandler(
                     ? (x.Price.Value - x.DiscountPrice.Value) / x.Price.Value * 100
                     : (decimal?)null),
                 x.Created,
-                x.IsInStock,
+                x.StockQuantity,
                 Translation = x.Translations
                     .Where(t => t.LanguageCode == languageCode)
                     .Select(t => new { t.Title, t.Slug })
@@ -88,7 +88,7 @@ public sealed class GetCatalogProductsQueryHandler(
                 x.Price,
                 x.EffectivePrice != x.Price ? x.EffectivePrice : null,
                 x.EffectiveDiscountPercent,
-                x.IsInStock,
+                x.StockQuantity,
                 x.ImageObjectKeys.FirstOrDefault() is string primaryImageObjectKey
                     ? imageStorage.GetPublicUrl(primaryImageObjectKey)
                     : null,

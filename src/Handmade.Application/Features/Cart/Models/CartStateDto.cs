@@ -1,6 +1,6 @@
 namespace Handmade.Application.Features.Cart.Models;
 
-public sealed record CartStateDto(int ProductId, bool IsInCart);
+public sealed record CartStateDto(int ProductId, bool IsInCart, string? Reason = null);
 
 public sealed record CartSummaryDto(
     int TotalItems,
@@ -16,5 +16,5 @@ public sealed record CartItemDto(
     decimal? Price,
     decimal? OriginalPrice,
     decimal? DiscountPercent,
-    bool IsInStock,
+    int StockQuantity,
     string? PrimaryImageUrl);

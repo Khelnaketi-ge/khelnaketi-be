@@ -64,7 +64,7 @@ public sealed class GetCategoryProductsBySlugQueryHandler(
                 EffectiveDiscountPercent = x.DiscountPercent ?? (x.DiscountPrice.HasValue && x.Price.HasValue && x.Price.Value > 0
                     ? (x.Price.Value - x.DiscountPrice.Value) / x.Price.Value * 100
                     : (decimal?)null),
-                x.IsInStock,
+                x.StockQuantity,
                 Translation = x.Translations
                     .Where(t => t.LanguageCode == languageCode)
                     .Select(t => new { t.Title, t.Slug })
@@ -92,7 +92,7 @@ public sealed class GetCategoryProductsBySlugQueryHandler(
                 x.Price,
                 x.EffectivePrice != x.Price ? x.EffectivePrice : null,
                 x.EffectiveDiscountPercent,
-                x.IsInStock,
+                x.StockQuantity,
                 x.ImageObjectKeys.FirstOrDefault() is string primaryImageObjectKey
                     ? imageStorage.GetPublicUrl(primaryImageObjectKey)
                     : null,

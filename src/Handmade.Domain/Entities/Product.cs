@@ -16,7 +16,7 @@ public class Product : BaseAuditableEntity<int>
     public decimal? Price { get; set; }
     public decimal? DiscountPrice { get; set; }
     public decimal? DiscountPercent { get; set; }
-    public bool IsInStock { get; set; }
+    public int StockQuantity { get; set; }
 
     public ProductStatus Status { get; set; } = ProductStatus.Draft;
     public ICollection<ProductImage> Images { get; set; } = [];

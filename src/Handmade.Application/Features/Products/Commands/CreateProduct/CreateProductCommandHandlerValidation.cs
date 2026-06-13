@@ -34,6 +34,9 @@ public sealed class CreateProductCommandHandlerValidation : AbstractValidator<Cr
             .GreaterThanOrEqualTo(0).When(x => x.DiscountPercent.HasValue).WithMessage("Discount percent cannot be negative")
             .LessThanOrEqualTo(100).When(x => x.DiscountPercent.HasValue).WithMessage("Discount percent cannot be greater than 100");
 
+        RuleFor(x => x.StockQuantity)
+            .GreaterThanOrEqualTo(0).WithMessage("Stock quantity cannot be negative");
+
         RuleFor(x => x)
             .Must(x => !(x.DiscountPrice.HasValue && x.DiscountPercent.HasValue))
             .WithMessage("Use either discount price or discount percent");

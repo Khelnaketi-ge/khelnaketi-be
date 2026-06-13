@@ -19,7 +19,7 @@ public sealed class ProductDto : IMapFrom<Product>
     public decimal? Price { get; set; }
     public decimal? DiscountPrice { get; set; }
     public decimal? DiscountPercent { get; set; }
-    public bool IsInStock { get; set; }
+    public int StockQuantity { get; set; }
     public ProductStatus Status { get; set; }
     public DateTimeOffset Created { get; set; }
 

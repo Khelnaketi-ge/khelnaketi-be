@@ -8,6 +8,6 @@ public sealed record CategoryProductCardDto(
     decimal? Price,
     decimal? DiscountPrice,
     decimal? DiscountPercent,
-    bool IsInStock,
+    int StockQuantity,
     string? PrimaryImageUrl,
     IReadOnlyCollection<string> ImageUrls);

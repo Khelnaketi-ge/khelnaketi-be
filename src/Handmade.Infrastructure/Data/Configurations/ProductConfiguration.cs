@@ -28,8 +28,8 @@ internal class ProductConfiguration : BaseAuditableEntityConfiguration<Product>
         builder.Property(x => x.DiscountPercent)
             .HasPrecision(5, 2);
 
-        builder.Property(x => x.IsInStock)
-            .HasDefaultValue(false);
+        builder.Property(x => x.StockQuantity)
+            .HasDefaultValue(0);
 
         builder.Property(x => x.Status)
             .HasConversion<short>()

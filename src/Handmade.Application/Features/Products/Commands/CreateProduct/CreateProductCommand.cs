@@ -21,7 +21,7 @@ public sealed record CreateProductCommand(
     decimal? Price,
     decimal? DiscountPrice,
     decimal? DiscountPercent,
-    bool IsInStock,
+    int StockQuantity,
     ProductStatus Status,
     IReadOnlyCollection<ProductAttributeValueInput>? AttributeValues,
     IReadOnlyCollection<ProductTranslationInput> Translations,
@@ -98,7 +98,7 @@ public sealed class CreateProductCommandHandler(
                 Price = request.Price,
                 DiscountPrice = request.DiscountPrice,
                 DiscountPercent = request.DiscountPercent,
-                IsInStock = request.IsInStock,
+                StockQuantity = request.StockQuantity,
                 Status = request.Status,
                 AttributeValues = productAttributeValues
             };

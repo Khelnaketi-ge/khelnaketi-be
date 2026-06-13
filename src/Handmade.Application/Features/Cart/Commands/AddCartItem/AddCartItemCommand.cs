@@ -23,17 +23,22 @@ public sealed class AddCartItemCommandHandler(
             throw new UnauthorizedException(UnauthorizedErrors.InvalidCreds);
         }
 
-        var productExists = await context.Products
+        var product = await context.Products
             .AsNoTracking()
-            .AnyAsync(
+            .Where(
                 x => x.Id == request.ProductId
                     && x.Status == ProductStatus.Active
-                    && x.Brand.Status == BrandStatus.Active,
-                cancellationToken);
+                    && x.Brand.Status == BrandStatus.Active)
+            .Select(x => new
+            {
+                x.Id,
+                x.StockQuantity
+            })
+            .SingleOrDefaultAsync(cancellationToken);
 
-        if (!productExists)
+        if (product is null || product.StockQuantity <= 0)
         {
-            return new CartStateDto(request.ProductId, false);
+            return new CartStateDto(request.ProductId, false, "outOfStock");
         }
 
         var activeCart = await context.Carts
@@ -60,6 +65,11 @@ public sealed class AddCartItemCommandHandler(
 
         if (cartItem is not null)
         {
+            if (cartItem.Quantity >= product.StockQuantity)
+            {
+                return new CartStateDto(request.ProductId, true, "stockLimitReached");
+            }
+
             cartItem.Quantity += 1;
             await context.SaveChangesAsync(cancellationToken);
             return new CartStateDto(request.ProductId, true);

@@ -23,7 +23,7 @@ public sealed record UpdateProductCommand(
     decimal? Price,
     decimal? DiscountPrice,
     decimal? DiscountPercent,
-    bool IsInStock,
+    int StockQuantity,
     ProductStatus Status,
     IReadOnlyCollection<ProductAttributeValueInput>? AttributeValues,
     IReadOnlyCollection<ProductTranslationInput> Translations,
@@ -130,7 +130,7 @@ public sealed class UpdateProductCommandHandler(
             product.Price = request.Price;
             product.DiscountPrice = request.DiscountPrice;
             product.DiscountPercent = request.DiscountPercent;
-            product.IsInStock = request.IsInStock;
+            product.StockQuantity = request.StockQuantity;
             product.Status = request.Status;
 
             foreach (var translation in product.Translations.ToList())

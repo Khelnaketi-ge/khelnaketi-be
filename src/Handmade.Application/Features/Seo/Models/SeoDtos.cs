@@ -29,7 +29,7 @@ public sealed record ProductSeoDto(
     decimal? Price,
     decimal? DiscountPrice,
     decimal? DiscountPercent,
-    bool IsInStock,
+    int StockQuantity,
     ProductStatus Availability,
     string? PrimaryImageUrl,
     DateTimeOffset UpdatedAt);
