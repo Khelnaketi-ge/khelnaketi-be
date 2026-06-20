@@ -9,6 +9,7 @@ using Handmade.Application.Features.Products.Queries.GetCatalogFilters;
 using Handmade.Application.Features.Products.Queries.GetCatalogProducts;
 using Handmade.Application.Features.Products.Queries.GetCategoryProductsBySlug;
 using Handmade.Application.Features.Products.Queries.GetMyProducts;
+using Handmade.Application.Features.Products.Queries.GetProductBySlug;
 using Handmade.Domain.Enums;
 using Handmade.Infrastructure.Auth.Policies;
 using Handmade.WebApi.Infrastructure;
@@ -87,6 +88,15 @@ public class ProductsController(ISender sender) : ApiController(sender)
         CancellationToken cancellationToken)
     {
         return Ok(await Sender.Send(new GetCategoryProductsBySlugQuery(slug), cancellationToken));
+    }
+
+    [HttpGet("{slug}")]
+    public async Task<IActionResult> GetBySlug(
+        [FromRoute] string slug,
+        CancellationToken cancellationToken)
+    {
+        var product = await Sender.Send(new GetProductBySlugQuery(slug), cancellationToken);
+        return product is null ? NotFound() : Ok(product);
     }
 
     [HttpGet("admin")]

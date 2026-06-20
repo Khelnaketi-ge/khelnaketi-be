@@ -53,6 +53,12 @@ public sealed class UpdateProductCommandHandlerValidation : AbstractValidator<Up
             .Must(x => x is ProductStatus.Draft or ProductStatus.Active or ProductStatus.Archived)
             .WithMessage("Product status is invalid");
 
+        RuleFor(x => x)
+            .Must(x =>
+                (x.ExistingImageIds?.Distinct().Count() ?? 0) + (x.Images?.Count ?? 0) <= 5)
+            .WithMessage("A product can have up to 5 images")
+            .WithName("Images");
+
         RuleForEach(x => x.Images)
             .ChildRules(image =>
             {
